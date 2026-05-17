@@ -5,6 +5,107 @@ function upload_dir($folder)
     return __DIR__ . '/../documents/' . trim($folder, '/\\') . '/';
 }
 
+function set_document_file_error($message)
+{
+    $GLOBALS['document_file_error'] = trim((string) $message);
+}
+
+function document_file_error()
+{
+    return $GLOBALS['document_file_error'] ?? '';
+}
+
+function ini_size_to_bytes($size)
+{
+    $size = trim((string) $size);
+
+    if ($size === '') {
+        return 0;
+    }
+
+    $unit = strtolower(substr($size, -1));
+    $number = (float) $size;
+
+    if ($unit === 'g') {
+        return (int) ($number * 1024 * 1024 * 1024);
+    }
+
+    if ($unit === 'm') {
+        return (int) ($number * 1024 * 1024);
+    }
+
+    if ($unit === 'k') {
+        return (int) ($number * 1024);
+    }
+
+    return (int) $number;
+}
+
+function format_upload_bytes($bytes)
+{
+    $bytes = (int) $bytes;
+
+    if ($bytes >= 1024 * 1024) {
+        return round($bytes / 1024 / 1024, 2) . ' MB';
+    }
+
+    if ($bytes >= 1024) {
+        return round($bytes / 1024, 2) . ' KB';
+    }
+
+    return $bytes . ' byte';
+}
+
+function request_upload_error()
+{
+    $content_length = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+    $post_max_raw = ini_get('post_max_size');
+    $post_max = ini_size_to_bytes($post_max_raw);
+
+    if ($post_max > 0 && $content_length > $post_max) {
+        return 'Ukuran total upload ' . format_upload_bytes($content_length) . ' melebihi post_max_size server (' . $post_max_raw . ').';
+    }
+
+    return '';
+}
+
+function upload_error_message($error, $label = 'File')
+{
+    $messages = [
+        UPLOAD_ERR_INI_SIZE => $label . ' melebihi batas upload server. Naikkan upload_max_filesize dan post_max_size, atau kecilkan ukuran file.',
+        UPLOAD_ERR_FORM_SIZE => $label . ' melebihi batas ukuran yang diizinkan form.',
+        UPLOAD_ERR_PARTIAL => $label . ' hanya terunggah sebagian. Coba unggah ulang.',
+        UPLOAD_ERR_NO_FILE => $label . ' wajib dipilih.',
+        UPLOAD_ERR_NO_TMP_DIR => 'Server tidak memiliki folder sementara untuk upload.',
+        UPLOAD_ERR_CANT_WRITE => 'Server gagal menulis file upload ke disk.',
+        UPLOAD_ERR_EXTENSION => 'Upload diblokir oleh ekstensi PHP di server.',
+    ];
+
+    return $messages[$error] ?? $label . ' gagal diunggah. Kode error: ' . (string) $error . '.';
+}
+
+function ensure_upload_dir($folder)
+{
+    $folder = trim($folder, '/\\');
+    $target_dir = upload_dir($folder);
+
+    if (!is_dir($target_dir) && !@mkdir($target_dir, 0775, true) && !is_dir($target_dir)) {
+        set_document_file_error('Folder documents/' . $folder . ' tidak bisa dibuat di server.');
+        return '';
+    }
+
+    if (!is_writable($target_dir)) {
+        @chmod($target_dir, 0775);
+    }
+
+    if (!is_writable($target_dir)) {
+        set_document_file_error('Folder documents/' . $folder . ' tidak bisa ditulis. Periksa permission/owner folder di server deploy.');
+        return '';
+    }
+
+    return $target_dir;
+}
+
 function safe_file_name($file_name)
 {
     $file_name = str_replace(['/', '\\'], '_', $file_name);
@@ -16,7 +117,17 @@ function safe_file_name($file_name)
 
 function move_document_file($file, $document_id)
 {
-    if (empty($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+    set_document_file_error('');
+
+    if (empty($file)) {
+        set_document_file_error(upload_error_message(UPLOAD_ERR_NO_FILE, 'File dokumen'));
+        return '';
+    }
+
+    $error = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+
+    if ($error !== UPLOAD_ERR_OK) {
+        set_document_file_error(upload_error_message($error, 'File dokumen'));
         return '';
     }
 
@@ -25,22 +136,33 @@ function move_document_file($file, $document_id)
     $allowed = ['pdf', 'doc', 'docx'];
 
     if (!in_array($extension, $allowed, true)) {
+        set_document_file_error('Format file dokumen harus PDF, DOC, atau DOCX.');
         return '';
     }
 
-    $target_dir = upload_dir('files');
+    $tmp_name = $file['tmp_name'] ?? '';
 
-    if (!is_dir($target_dir)) {
-        @mkdir($target_dir, 0755, true);
+    if ($tmp_name === '' || !is_uploaded_file($tmp_name)) {
+        set_document_file_error('File dokumen tidak valid sebagai file upload.');
+        return '';
+    }
+
+    $target_dir = ensure_upload_dir('files');
+
+    if ($target_dir === '') {
+        return '';
     }
 
     $base_name = pathinfo($original_name, PATHINFO_FILENAME);
     $file_name = safe_file_name($document_id . '_' . $base_name . '_' . time() . '.' . $extension);
     $target_path = $target_dir . $file_name;
 
-    if (!move_uploaded_file($file['tmp_name'], $target_path)) {
+    if (!move_uploaded_file($tmp_name, $target_path)) {
+        set_document_file_error('File dokumen gagal dipindahkan ke folder documents/files. Periksa permission folder server.');
         return '';
     }
+
+    @chmod($target_path, 0644);
 
     return 'documents/files/' . $file_name;
 }
@@ -50,9 +172,21 @@ function has_uploaded_file($file)
     return !empty($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK;
 }
 
+function uploaded_file_was_submitted($file)
+{
+    return !empty($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+}
+
 function move_preview_file($file, $document_id)
 {
-    if (!has_uploaded_file($file)) {
+    if (!uploaded_file_was_submitted($file)) {
+        return '';
+    }
+
+    $error = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+
+    if ($error !== UPLOAD_ERR_OK) {
+        set_document_file_error(upload_error_message($error, 'File preview PDF'));
         return '';
     }
 
@@ -60,22 +194,33 @@ function move_preview_file($file, $document_id)
     $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
 
     if ($extension !== 'pdf') {
+        set_document_file_error('File preview harus berformat PDF.');
         return '';
     }
 
-    $target_dir = upload_dir('previews');
+    $tmp_name = $file['tmp_name'] ?? '';
 
-    if (!is_dir($target_dir)) {
-        @mkdir($target_dir, 0755, true);
+    if ($tmp_name === '' || !is_uploaded_file($tmp_name)) {
+        set_document_file_error('File preview PDF tidak valid sebagai file upload.');
+        return '';
+    }
+
+    $target_dir = ensure_upload_dir('previews');
+
+    if ($target_dir === '') {
+        return '';
     }
 
     $base_name = pathinfo($original_name, PATHINFO_FILENAME);
     $file_name = safe_file_name($document_id . '_preview_' . $base_name . '_' . time() . '.pdf');
     $target_path = $target_dir . $file_name;
 
-    if (!move_uploaded_file($file['tmp_name'], $target_path)) {
+    if (!move_uploaded_file($tmp_name, $target_path)) {
+        set_document_file_error('File preview PDF gagal dipindahkan ke folder documents/previews. Periksa permission folder server.');
         return '';
     }
+
+    @chmod($target_path, 0644);
 
     return 'documents/previews/' . $file_name;
 }

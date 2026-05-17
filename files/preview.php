@@ -36,6 +36,10 @@ if (!$absolute_file || strpos($absolute_file, $base_dir) !== 0 || !is_file($abso
 $source_extension = document_file_extension($document['file']);
 $extension = document_file_extension($absolute_file);
 
+header_remove('X-Frame-Options');
+header("Content-Security-Policy: frame-ancestors 'self'");
+header('X-Content-Type-Options: nosniff');
+
 if ($extension === 'pdf') {
     header('Content-Type: application/pdf');
     header('Content-Disposition: inline; filename="' . str_replace('"', '', basename($absolute_file)) . '"');
@@ -180,8 +184,8 @@ header('Content-Type: text/html; charset=utf-8');
     </main>
 
     <?php if ($source_extension === 'docx') : ?>
-    <script src="<?= h(app_url('plugins/datatables/jszip.min.js')); ?>?v=1.24"></script>
-    <script src="<?= h(app_url('plugins/docx-preview/docx-preview.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/jszip.min.js')); ?>?v=1.25"></script>
+    <script src="<?= h(app_url('plugins/docx-preview/docx-preview.min.js')); ?>?v=1.25"></script>
     <script>
       (function () {
         var target = document.getElementById('docxPreview');

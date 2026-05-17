@@ -110,11 +110,12 @@ function add_document($data, $file, $preview_file_upload = [])
         return false;
     }
 
-    $preview_file = has_uploaded_file($preview_file_upload)
+    $has_preview_upload = uploaded_file_was_submitted($preview_file_upload);
+    $preview_file = $has_preview_upload
         ? move_preview_file($preview_file_upload, $id_document)
         : make_preview_file($file_path);
 
-    if (has_uploaded_file($preview_file_upload) && $preview_file === '') {
+    if ($has_preview_upload && $preview_file === '') {
         return false;
     }
 
@@ -160,7 +161,7 @@ function update_document($id_document, $data, $file, $preview_file_upload = [])
     $file_sql = '';
     $preview_sql = '';
 
-    if (has_uploaded_file($file)) {
+    if (uploaded_file_was_submitted($file)) {
         $file_path = move_document_file($file, $id_document);
 
         if ($file_path === '') {
@@ -174,7 +175,7 @@ function update_document($id_document, $data, $file, $preview_file_upload = [])
         $preview_sql = ", preview_file = $preview_safe";
     }
 
-    if (has_uploaded_file($preview_file_upload)) {
+    if (uploaded_file_was_submitted($preview_file_upload)) {
         $preview_file = move_preview_file($preview_file_upload, $id_document);
 
         if ($preview_file === '') {
