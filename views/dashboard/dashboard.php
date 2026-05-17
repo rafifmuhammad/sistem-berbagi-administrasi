@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../functions/function.php';
-require_login();
+require_admin();
 
 $active_menu = 'dashboard';
 $use_datatables = true;
@@ -32,16 +32,16 @@ $recent_documents = array_slice(get_documents(false), 0, 8);
       media="print"
       onload="this.media='all'"
     />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.24" rel="stylesheet" />
     <?php if (!empty($use_datatables)) : ?>
-    <link href="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.css')); ?>?v=1.24" rel="stylesheet" />
     <?php endif; ?>
-    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.24" rel="stylesheet" />
   </head>
   <body>
     <div class="loader">
@@ -133,30 +133,6 @@ $recent_documents = array_slice(get_documents(false), 0, 8);
                   </ol>
                 </nav>
                 <h3>Dashboard</h3>
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-12">
-              <div class="card bg-info text-white">
-                <div class="card-body">
-                  <div class="dashboard-info row">
-                    <div class="info-text col-md-7">
-                      <h5 class="card-title">Ringkasan Sistem</h5>
-                      <p>
-                        Outline membantu menyediakan dokumen administratif kampus yang sering
-                        dibutuhkan, tetapi belum tersusun rapi dalam satu tempat.
-                      </p>
-                      <ul>
-                        <li>Dokumen baru masuk sebagai status menunggu.</li>
-                        <li>Admin menyetujui dokumen sebelum tampil untuk publik.</li>
-                        <li>Publik hanya melihat dokumen yang sudah disetujui.</li>
-                      </ul>
-                    </div>
-                    <div class="info-image col-md-5"></div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -309,20 +285,20 @@ $recent_documents = array_slice(get_documents(false), 0, 8);
         setTimeout(hideLoader, 1500);
       })();
     </script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.24"></script>
     <?php if (!empty($use_datatables)) : ?>
-    <script src="<?= h(app_url('plugins/datatables/jquery.dataTables.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/dataTables.responsive.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('plugins/datatables/jquery.dataTables.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/dataTables.responsive.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.js')); ?>?v=1.24"></script>
     <?php endif; ?>
-    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.24"></script>
     <?php flash_script(); ?>
   </body>
 </html>

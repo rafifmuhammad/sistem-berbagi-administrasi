@@ -5,7 +5,7 @@ CREATE DATABASE IF NOT EXISTS db_berbagi_dokumen
 USE db_berbagi_dokumen;
 
 CREATE TABLE IF NOT EXISTS tb_user (
-  id_user INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  id_user VARCHAR(30) PRIMARY KEY,
   email VARCHAR(150) NOT NULL UNIQUE,
   nama VARCHAR(150) NOT NULL,
   tanggal_lahir DATE NULL,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS tb_user (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS tb_kategori (
-  id_category INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  id_category VARCHAR(30) PRIMARY KEY,
   kode_kategori VARCHAR(20) NOT NULL UNIQUE,
   nama_kategori VARCHAR(150) NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -25,15 +25,16 @@ CREATE TABLE IF NOT EXISTS tb_kategori (
 
 CREATE TABLE IF NOT EXISTS tb_dokumen (
   id_document VARCHAR(30) PRIMARY KEY,
-  id_category INT UNSIGNED NOT NULL,
-  id_user INT UNSIGNED NULL,
+  id_category VARCHAR(30) NOT NULL,
+  id_user VARCHAR(30) NULL,
   nama_dokumen VARCHAR(200) NOT NULL,
   keterangan TEXT NULL,
   tanggal_upload DATE NOT NULL,
   file VARCHAR(255) NOT NULL,
   preview_file VARCHAR(255) NULL,
   status ENUM('menunggu', 'disetujui', 'ditolak') NOT NULL DEFAULT 'menunggu',
-  approved_by INT UNSIGNED NULL,
+  rejection_reason TEXT NULL,
+  approved_by VARCHAR(30) NULL,
   approved_at DATETIME NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -63,8 +64,9 @@ CREATE TABLE IF NOT EXISTS tb_dokumen (
     ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO tb_user (email, nama, tanggal_lahir, password, role)
+INSERT INTO tb_user (id_user, email, nama, tanggal_lahir, password, role)
 VALUES (
+  'USR-ADMIN',
   'admin@outline.local',
   'Admin Outline',
   NULL,
@@ -76,9 +78,9 @@ ON DUPLICATE KEY UPDATE
   password = VALUES(password),
   role = VALUES(role);
 
-INSERT INTO tb_kategori (kode_kategori, nama_kategori) VALUES
-  ('ADM', 'Administrasi Umum'),
-  ('KEU', 'Keuangan'),
-  ('PEG', 'Kepegawaian'),
-  ('AKD', 'Akademik')
+INSERT INTO tb_kategori (id_category, kode_kategori, nama_kategori) VALUES
+  ('CAT-ADM', 'ADM', 'Administrasi Umum'),
+  ('CAT-KEU', 'KEU', 'Keuangan'),
+  ('CAT-PEG', 'PEG', 'Kepegawaian'),
+  ('CAT-AKD', 'AKD', 'Akademik')
 ON DUPLICATE KEY UPDATE nama_kategori = VALUES(nama_kategori);

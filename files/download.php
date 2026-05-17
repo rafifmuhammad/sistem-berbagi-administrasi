@@ -16,6 +16,12 @@ if (!is_logged_in() && $document['status'] !== 'disetujui') {
     exit;
 }
 
+if (is_logged_in() && !is_admin() && $document['status'] !== 'disetujui' && (string) ($document['id_user'] ?? '') !== current_user_id()) {
+    http_response_code(403);
+    echo 'Dokumen tidak tersedia untuk akun ini.';
+    exit;
+}
+
 $base_dir = realpath(__DIR__ . '/..');
 $file_path = realpath(__DIR__ . '/../' . $document['file']);
 

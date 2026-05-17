@@ -36,3 +36,19 @@ if (!function_exists('h')) {
         return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
     }
 }
+
+if (!function_exists('make_entity_id')) {
+    function make_entity_id($prefix)
+    {
+        $seed = strtoupper(str_replace('.', '', uniqid('', true)));
+
+        return strtoupper((string) $prefix) . '-' . $seed;
+    }
+}
+
+if (!function_exists('html_id_suffix')) {
+    function html_id_suffix($value)
+    {
+        return preg_replace('/[^A-Za-z0-9_-]/', '_', (string) $value);
+    }
+}

@@ -17,11 +17,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'statu
     }
 
     $status = $_POST['status'] ?? '';
-    $result = update_document_status($id, $status);
+    $reason = $_POST['rejection_reason'] ?? '';
+    $result = update_document_status($id, $status, $reason);
     set_flash(
         $result !== false ? 'success' : 'error',
         $result !== false ? 'Berhasil' : 'Gagal',
-        $result !== false ? 'Status dokumen diperbarui.' : 'Status dokumen tidak valid.'
+        $result !== false ? 'Status dokumen diperbarui.' : 'Status dokumen tidak valid atau alasan penolakan kosong.'
     );
     redirect_to('views/documents/document_management.php');
 }
@@ -43,8 +44,13 @@ if ($action === 'reject') {
         redirect_to('views/documents/document_management.php');
     }
 
-    $result = reject_document($id);
-    set_flash($result > 0 ? 'success' : 'info', $result > 0 ? 'Ditolak' : 'Tidak Berubah', $result > 0 ? 'Dokumen tidak tampil di halaman publik.' : 'Status dokumen tidak berubah.');
+    $reason = $_POST['rejection_reason'] ?? '';
+    $result = reject_document($id, $reason);
+    if ($result === false) {
+        set_flash('error', 'Gagal', 'Alasan penolakan wajib diisi.');
+    } else {
+        set_flash($result > 0 ? 'success' : 'info', $result > 0 ? 'Ditolak' : 'Tidak Berubah', $result > 0 ? 'Dokumen tidak tampil di halaman publik.' : 'Status dokumen tidak berubah.');
+    }
     redirect_to('views/documents/document_management.php');
 }
 

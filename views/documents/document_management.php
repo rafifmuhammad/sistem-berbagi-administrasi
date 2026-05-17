@@ -7,7 +7,7 @@ $use_datatables = true;
 $table_search_id = 'documentsTable';
 $search_placeholder = 'Cari dokumen...';
 $page_title = 'Dokumen - Outline';
-$documents = get_documents(false);
+$documents = is_admin() ? get_documents(false) : get_documents(false, current_user_id());
 $categories = get_categories();
 ?>
 <!doctype html>
@@ -30,16 +30,16 @@ $categories = get_categories();
       media="print"
       onload="this.media='all'"
     />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.24" rel="stylesheet" />
     <?php if (!empty($use_datatables)) : ?>
-    <link href="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.css')); ?>?v=1.24" rel="stylesheet" />
     <?php endif; ?>
-    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.24" rel="stylesheet" />
   </head>
   <body>
     <div class="loader">
@@ -51,18 +51,21 @@ $categories = get_categories();
     <div class="lime-sidebar">
       <div class="lime-sidebar-inner slimscroll">
         <ul class="accordion-menu">
+          <?php if (is_admin()) : ?>
           <li class="sidebar-title">Menu Utama</li>
           <li>
             <a href="<?= h(app_url('views/dashboard/dashboard.php')); ?>" class="<?= ($active_menu ?? '') === 'dashboard' ? 'active' : ''; ?>">
               <i class="material-icons">dashboard</i>Dashboard
             </a>
           </li>
+          <?php endif; ?>
           <li class="sidebar-title">Pengurusan Dokumen</li>
           <li>
             <a href="<?= h(app_url('views/documents/document_management.php')); ?>" class="<?= ($active_menu ?? '') === 'documents' ? 'active' : ''; ?>">
               <i class="material-icons">description</i>Dokumen
             </a>
           </li>
+          <?php if (is_admin()) : ?>
           <li>
             <a href="<?= h(app_url('views/categories/category_management.php')); ?>" class="<?= ($active_menu ?? '') === 'categories' ? 'active' : ''; ?>">
               <i class="material-icons">sell</i>Kategori
@@ -74,6 +77,7 @@ $categories = get_categories();
               <i class="material-icons">people_outline</i>Pengguna
             </a>
           </li>
+          <?php endif; ?>
           <li>
             <a href="<?= h(app_url('logout.php')); ?>" class="js-link-loading">
               <i class="material-icons">logout</i>Keluar
@@ -90,7 +94,7 @@ $categories = get_categories();
             <span class="material-design-hamburger__layer"></span>
           </a>
         </section>
-        <a class="navbar-brand" href="<?= h(app_url('views/dashboard/dashboard.php')); ?>">Outline</a>
+        <a class="navbar-brand" href="<?= h(app_url(is_admin() ? 'views/dashboard/dashboard.php' : 'views/documents/document_management.php')); ?>">Outline</a>
         <button
           class="navbar-toggler"
           type="button"
@@ -127,7 +131,9 @@ $categories = get_categories();
               <div class="page-title">
                 <nav aria-label="breadcrumb">
                   <ol class="breadcrumb breadcrumb-separator-1">
+                    <?php if (is_admin()) : ?>
                     <li class="breadcrumb-item"><a href="<?= h(app_url('views/dashboard/dashboard.php')); ?>">Dashboard</a></li>
+                    <?php endif; ?>
                     <li class="breadcrumb-item active" aria-current="page">Dokumen</li>
                   </ol>
                 </nav>
@@ -171,8 +177,29 @@ $categories = get_categories();
                     </div>
                   </div>
 
-                  <div class="table-responsive">
+                  <div class="table-responsive documents-table-wrap">
                     <table id="documentsTable" class="table">
+                      <colgroup>
+                        <?php if (is_admin()) : ?>
+                        <col class="documents-col-id" />
+                        <col class="documents-col-name" />
+                        <col class="documents-col-category" />
+                        <col class="documents-col-date" />
+                        <col class="documents-col-status" />
+                        <col class="documents-col-file" />
+                        <col class="documents-col-icon" />
+                        <col class="documents-col-icon" />
+                        <col class="documents-col-action" />
+                        <?php else : ?>
+                        <col class="documents-col-id" />
+                        <col class="documents-col-name" />
+                        <col class="documents-col-category" />
+                        <col class="documents-col-date" />
+                        <col class="documents-col-status" />
+                        <col class="documents-col-file" />
+                        <col class="documents-col-action" />
+                        <?php endif; ?>
+                      </colgroup>
                       <thead>
                         <tr>
                           <th class="text-center">ID Dokumen</th>
@@ -181,10 +208,17 @@ $categories = get_categories();
                           <th class="text-center">Tanggal Upload</th>
                           <th class="text-center">Status</th>
                           <th>File</th>
-                          <th class="text-center">Lihat</th>
-                          <th class="text-center">Detail</th>
-                          <th class="text-center">Unduh</th>
-                          <th class="all text-center">Aksi</th>
+                          <?php if (is_admin()) : ?>
+                          <th class="text-center no-sort documents-icon-heading" title="Lihat dokumen">
+                            <span class="sr-only">Lihat</span>
+                            <i class="material-icons" aria-hidden="true">visibility</i>
+                          </th>
+                          <th class="text-center no-sort documents-icon-heading" title="Unduh dokumen">
+                            <span class="sr-only">Unduh</span>
+                            <i class="material-icons" aria-hidden="true">download</i>
+                          </th>
+                          <?php endif; ?>
+                          <th class="all text-center no-sort">Aksi</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -200,17 +234,25 @@ $categories = get_categories();
                             <form method="post" action="<?= h(app_url('views/documents/document_action.php')); ?>" class="m-0">
                               <input type="hidden" name="action" value="status" />
                               <input type="hidden" name="id" value="<?= h($document['id_document']); ?>" />
-                              <select name="status" class="form-control form-control-sm status-select js-status-select" data-current="<?= h($document['status']); ?>" aria-label="Status dokumen">
+                              <select
+                                name="status"
+                                class="form-control form-control-sm status-select js-status-select"
+                                data-current="<?= h($document['status']); ?>"
+                                data-id="<?= h($document['id_document']); ?>"
+                                data-reason="<?= h($document['rejection_reason'] ?? ''); ?>"
+                                aria-label="Status dokumen"
+                              >
                                 <option value="menunggu" <?= $document['status'] === 'menunggu' ? 'selected' : ''; ?>>Menunggu</option>
                                 <option value="disetujui" <?= $document['status'] === 'disetujui' ? 'selected' : ''; ?>>Disetujui</option>
                                 <option value="ditolak" <?= $document['status'] === 'ditolak' ? 'selected' : ''; ?>>Ditolak</option>
                               </select>
                             </form>
                             <?php else : ?>
-                            <?= document_status_badge($document['status']); ?>
+                            <?= document_status_badge($document['status'], $document['rejection_reason'] ?? '', true); ?>
                             <?php endif; ?>
                           </td>
                           <td><?= h(basename($document['file'])); ?></td>
+                          <?php if (is_admin()) : ?>
                           <td class="text-center">
                             <a
                               href="#"
@@ -224,16 +266,6 @@ $categories = get_categories();
                           </td>
                           <td class="text-center">
                             <a
-                              href="<?= h(app_url('views/documents/document_detail.php?id=' . rawurlencode($document['id_document']))); ?>"
-                              class="btn btn-outline-success btn-icon btn-sm js-link-loading"
-                              aria-label="Detail dokumen"
-                              title="Detail dokumen"
-                            >
-                              <i class="material-icons">article</i>
-                            </a>
-                          </td>
-                          <td class="text-center">
-                            <a
                               href="<?= h(app_url('files/download.php?id=' . rawurlencode($document['id_document']))); ?>"
                               class="btn btn-outline-primary btn-icon btn-sm"
                               aria-label="Unduh dokumen"
@@ -242,23 +274,29 @@ $categories = get_categories();
                               <i class="material-icons">download</i>
                             </a>
                           </td>
+                          <?php endif; ?>
                           <td class="text-center">
                             <div class="dropdown action-dropdown">
                               <button
                                 class="btn btn-outline-secondary btn-sm dropdown-toggle"
                                 type="button"
                                 id="<?= h($document_action_id); ?>"
-                                data-toggle="dropdown"
+                                data-action-dropdown-toggle
                                 data-boundary="viewport"
                                 aria-haspopup="true"
                                 aria-expanded="false"
                               >
-                                <i class="material-icons">more_horiz</i> Aksi
+                                Aksi Lanjut
                               </button>
-                              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="<?= h($document_action_id); ?>">
+                              <div class="dropdown-menu dropdown-menu-right" data-action-dropdown-menu aria-labelledby="<?= h($document_action_id); ?>">
+                                <?php if (is_admin()) : ?>
+                                <a href="<?= h(app_url('views/documents/document_detail.php?id=' . rawurlencode($document['id_document']))); ?>" class="dropdown-item js-link-loading">
+                                  <i class="material-icons">article</i> Detail
+                                </a>
                                 <a href="<?= h(app_url('views/documents/document_edit.php?id=' . rawurlencode($document['id_document']))); ?>" class="dropdown-item js-link-loading">
                                   <i class="material-icons">edit</i> Ubah
                                 </a>
+                                <?php endif; ?>
                                 <a
                                   href="#"
                                   class="dropdown-item text-danger js-confirm"
@@ -301,8 +339,59 @@ $categories = get_categories();
             <h5 class="modal-title">Preview Dokumen</h5>
             <button type="button" class="close" data-dismiss="modal">&times;</button>
           </div>
+          <div class="modal-body preview-modal-body">
+            <iframe
+              id="pdfFrame"
+              class="preview-frame"
+              title="Preview dokumen"
+              sandbox="allow-same-origin allow-scripts"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <?php if (is_admin()) : ?>
+    <div class="modal fade" id="rejectReasonModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <form method="post" action="<?= h(app_url('views/documents/document_action.php')); ?>" class="js-action-loading">
+            <input type="hidden" name="action" value="status" />
+            <input type="hidden" name="status" value="ditolak" />
+            <input type="hidden" name="id" value="" />
+            <div class="modal-header">
+              <h5 class="modal-title">Alasan Ditolak</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <i class="material-icons">close</i>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group mb-0">
+                <label for="rejectReasonText">Alasan</label>
+                <textarea id="rejectReasonText" class="form-control" name="rejection_reason" rows="4" required></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Batal</button>
+              <button type="submit" class="btn btn-outline-primary btn-sm">Simpan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <?php endif; ?>
+
+    <div class="modal fade" id="rejectionReasonViewModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Alasan Ditolak</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <i class="material-icons">close</i>
+            </button>
+          </div>
           <div class="modal-body">
-            <iframe id="pdfFrame" width="100%" height="520"></iframe>
+            <p class="rejection-reason-text mb-0"></p>
           </div>
         </div>
       </div>
@@ -332,20 +421,20 @@ $categories = get_categories();
         setTimeout(hideLoader, 1500);
       })();
     </script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.24"></script>
     <?php if (!empty($use_datatables)) : ?>
-    <script src="<?= h(app_url('plugins/datatables/jquery.dataTables.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/dataTables.responsive.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('plugins/datatables/jquery.dataTables.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/dataTables.responsive.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.js')); ?>?v=1.24"></script>
     <?php endif; ?>
-    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.24"></script>
     <?php flash_script(); ?>
   </body>
 </html>

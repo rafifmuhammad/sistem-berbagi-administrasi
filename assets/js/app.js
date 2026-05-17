@@ -86,11 +86,16 @@
             return null;
         }
 
+        var isDocumentsTable = selector === "#documentsTable";
+
         return $(selector).DataTable({
-            responsive: true,
+            responsive: !isDocumentsTable,
             pageLength: 10,
             lengthMenu: [[5, 10, 25, 50, -1], ["5", "10", "25", "50", "Semua"]],
             autoWidth: false,
+            columnDefs: [
+                { orderable: false, targets: "no-sort" }
+            ],
             stripeClasses: [],
             language: datatableLanguage(),
             dom: "<'row align-items-center m-b-sm'<'col-md-6'l><'col-md-6'f>>" +
@@ -110,11 +115,50 @@
                 cancelButtonText: "Batal",
                 reverseButtons: true
             }).then(function (result) {
-                return result.isConfirmed;
+                return result.isConfirmed === true || result.value === true;
             });
         }
 
-        return Promise.resolve(false);
+        return Promise.resolve(window.confirm(options.title || "Lanjutkan?"));
+    }
+
+    var openActionDropdown = null;
+
+    function closeActionDropdown() {
+        if (!openActionDropdown) {
+            return;
+        }
+
+        openActionDropdown.$menu
+            .removeClass("show action-dropdown-floating")
+            .removeAttr("style");
+        openActionDropdown.$toggle
+            .removeClass("show")
+            .attr("aria-expanded", "false");
+        openActionDropdown.$dropdown.removeClass("show");
+        openActionDropdown.$placeholder.after(openActionDropdown.$menu);
+        openActionDropdown.$placeholder.remove();
+        openActionDropdown = null;
+    }
+
+    function positionActionDropdown() {
+        if (!openActionDropdown) {
+            return;
+        }
+
+        var rect = openActionDropdown.toggle.getBoundingClientRect();
+        var $menu = openActionDropdown.$menu;
+        var menuWidth = $menu.outerWidth();
+        var left = rect.right + window.pageXOffset - menuWidth;
+        var top = rect.bottom + window.pageYOffset + 6;
+        var maxLeft = window.pageXOffset + document.documentElement.clientWidth - menuWidth - 8;
+
+        left = Math.max(window.pageXOffset + 8, Math.min(left, maxLeft));
+
+        $menu.css({
+            left: left + "px",
+            top: top + "px"
+        });
     }
 
     $(function () {
@@ -163,18 +207,88 @@
             $(this).closest(".modal").modal("hide");
         });
 
-        $(".preview-btn").on("click", function (event) {
+        $(document).on("click", "[data-action-dropdown-toggle]", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            var toggle = this;
+
+            if (openActionDropdown && openActionDropdown.toggle === toggle) {
+                closeActionDropdown();
+                return;
+            }
+
+            var $toggle = $(toggle);
+            var $dropdown = $toggle.closest(".action-dropdown");
+            var $menu = $dropdown.find("[data-action-dropdown-menu]").first();
+
+            if (!$menu.length) {
+                return;
+            }
+
+            closeActionDropdown();
+
+            var $placeholder = $("<span data-action-dropdown-placeholder></span>");
+            $menu.before($placeholder);
+            $("body").append($menu);
+
+            openActionDropdown = {
+                toggle: toggle,
+                $toggle: $toggle,
+                $dropdown: $dropdown,
+                $menu: $menu,
+                $placeholder: $placeholder
+            };
+
+            $dropdown.addClass("show");
+            $toggle.addClass("show").attr("aria-expanded", "true");
+            $menu.addClass("show action-dropdown-floating");
+            positionActionDropdown();
+        });
+
+        $(document).on("click", function (event) {
+            if (!openActionDropdown) {
+                return;
+            }
+
+            if ($(event.target).closest("[data-action-dropdown-menu], [data-action-dropdown-toggle]").length) {
+                return;
+            }
+
+            closeActionDropdown();
+        });
+
+        $(document).on("click", "[data-action-dropdown-menu] a", function () {
+            closeActionDropdown();
+        });
+
+        $(window).on("resize scroll", closeActionDropdown);
+
+        $(document).on("click", ".preview-btn", function (event) {
             event.preventDefault();
 
             $("#pdfFrame").attr("src", $(this).data("file"));
             $("#previewModal").modal("show");
         });
 
-        $(".js-status-select").on("change", function () {
+        $(document).on("change", ".js-status-select", function () {
             var select = this;
             var $select = $(select);
             var current = ($select.data("current") || "").toString();
             var form = select.form;
+            var selected = select.value;
+
+            if (selected === "ditolak") {
+                var $rejectModal = $("#rejectReasonModal");
+                if ($rejectModal.length) {
+                    $rejectModal.find("[name='id']").val($select.data("id") || $(form).find("[name='id']").val() || "");
+                    $rejectModal.find("[name='rejection_reason']").val($select.data("reason") || "");
+                    select.value = current;
+                    $rejectModal.modal("show");
+                    return;
+                }
+            }
 
             confirmAction({
                 title: "Ubah status dokumen?",
@@ -194,7 +308,17 @@
             });
         });
 
-        $(".js-delete").on("click", function (event) {
+        $(document).on("click", ".js-rejection-reason", function (event) {
+            event.preventDefault();
+
+            var reason = $(this).data("reason") || "Belum ada alasan penolakan.";
+            var $modal = $("#rejectionReasonViewModal");
+
+            $modal.find(".rejection-reason-text").text(reason);
+            $modal.modal("show");
+        });
+
+        $(document).on("click", ".js-delete", function (event) {
             event.preventDefault();
 
             confirmAction({
@@ -212,7 +336,7 @@
             });
         });
 
-        $(".js-confirm").on("click", function (event) {
+        $(document).on("click", ".js-confirm", function (event) {
             event.preventDefault();
 
             var $button = $(this);

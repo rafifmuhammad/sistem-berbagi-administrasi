@@ -2,12 +2,12 @@
 require_once __DIR__ . '/functions/function.php';
 
 if (is_logged_in()) {
-    redirect_to('views/dashboard/dashboard.php');
+    redirect_to(is_admin() ? 'views/dashboard/dashboard.php' : 'views/documents/document_management.php');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (login_user($_POST['email'] ?? '', $_POST['password'] ?? '')) {
-        redirect_to('views/dashboard/dashboard.php');
+        redirect_to(is_admin() ? 'views/dashboard/dashboard.php' : 'views/documents/document_management.php');
     }
 
     set_flash('error', 'Gagal', 'Email atau password tidak sesuai.');
@@ -36,12 +36,12 @@ $page_title = 'Masuk - Outline';
       media="print"
       onload="this.media='all'"
     />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.24" rel="stylesheet" />
   </head>
   <body class="login-page err-500">
     <div class="loader">
@@ -104,14 +104,14 @@ $page_title = 'Masuk - Outline';
         setTimeout(hideLoader, 1500);
       })();
     </script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.24"></script>
     <?php flash_script(); ?>
   </body>
 </html>

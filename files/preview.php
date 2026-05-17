@@ -16,6 +16,12 @@ if (!is_logged_in() && $document['status'] !== 'disetujui') {
     exit;
 }
 
+if (is_logged_in() && !is_admin() && $document['status'] !== 'disetujui' && (string) ($document['id_user'] ?? '') !== current_user_id()) {
+    http_response_code(403);
+    echo 'Dokumen tidak tersedia untuk akun ini.';
+    exit;
+}
+
 $base_dir = realpath(__DIR__ . '/..');
 $preview_path = document_preview_path($document);
 $relative_file = $preview_path !== '' ? $preview_path : $document['file'];
@@ -129,14 +135,6 @@ header('Content-Type: text/html; charset=utf-8');
         padding: 10px 12px;
       }
 
-      .download-link {
-        color: #037afb;
-        display: inline-block;
-        font-weight: 600;
-        margin-top: 10px;
-        text-decoration: none;
-      }
-
       .docx-render-target .docx-wrapper {
         background: transparent;
         padding: 0;
@@ -171,21 +169,19 @@ header('Content-Type: text/html; charset=utf-8');
           <?= $content; ?>
           <?php else : ?>
           <p>Preview belum tersedia untuk format ini.</p>
-          <a class="download-link" href="<?= h(app_url('files/download.php?id=' . rawurlencode($document['id_document']))); ?>" target="_blank" rel="noopener">Unduh file asli</a>
           <?php endif; ?>
         </div>
         <?php elseif ($content !== '') : ?>
         <?= $content; ?>
         <?php else : ?>
         <p>Preview belum tersedia untuk format ini.</p>
-        <a class="download-link" href="<?= h(app_url('files/download.php?id=' . rawurlencode($document['id_document']))); ?>" target="_blank" rel="noopener">Unduh file asli</a>
         <?php endif; ?>
       </section>
     </main>
 
     <?php if ($source_extension === 'docx') : ?>
-    <script src="<?= h(app_url('plugins/datatables/jszip.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/docx-preview/docx-preview.min.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('plugins/datatables/jszip.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/docx-preview/docx-preview.min.js')); ?>?v=1.24"></script>
     <script>
       (function () {
         var target = document.getElementById('docxPreview');

@@ -11,7 +11,7 @@ function document_status_label($status)
     return $labels[$status] ?? 'Menunggu';
 }
 
-function document_status_badge($status)
+function document_status_badge($status, $reason = '', $clickable_reason = false)
 {
     $classes = [
         'menunggu' => 'badge-soft-amber',
@@ -20,13 +20,37 @@ function document_status_badge($status)
     ];
 
     $class = $classes[$status] ?? 'badge-soft-amber';
+    $label = h(document_status_label($status));
 
-    return '<span class="badge ' . $class . '">' . h(document_status_label($status)) . '</span>';
+    if ($status === 'ditolak' && $clickable_reason) {
+        $reason = trim((string) $reason);
+        $reason_text = $reason !== '' ? $reason : 'Belum ada alasan penolakan.';
+
+        return '<button type="button" class="badge status-reason-button ' . $class . ' js-rejection-reason" data-reason="' . h($reason_text) . '">' . $label . '</button>';
+    }
+
+    return '<span class="badge ' . $class . '">' . $label . '</span>';
 }
 
-function get_documents($approved_only = false)
+function current_user_id()
 {
-    $where = $approved_only ? "WHERE d.status = 'disetujui'" : '';
+    return trim((string) ($_SESSION['user']['id_user'] ?? ''));
+}
+
+function get_documents($approved_only = false, $owner_id = null)
+{
+    $conditions = [];
+
+    if ($approved_only) {
+        $conditions[] = "d.status = 'disetujui'";
+    }
+
+    if ($owner_id !== null && trim((string) $owner_id) !== '') {
+        $owner_safe = db_escape($owner_id);
+        $conditions[] = "d.id_user = '$owner_safe'";
+    }
+
+    $where = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
     return query("SELECT d.*, c.nama_kategori, u.nama AS uploader, a.nama AS approver
         FROM tb_dokumen d
@@ -55,7 +79,14 @@ function get_document($id_document)
 
 function next_document_id()
 {
-    return 'DOC-' . date('ymd') . '-' . strtoupper(substr(uniqid(), -5));
+    return make_entity_id('DOC');
+}
+
+function current_user_id_sql()
+{
+    $id_user = current_user_id();
+
+    return $id_user !== '' ? "'" . db_escape($id_user) . "'" : 'NULL';
 }
 
 function add_document($data, $file, $preview_file_upload = [])
@@ -63,13 +94,13 @@ function add_document($data, $file, $preview_file_upload = [])
     global $conn;
 
     $id_document = next_document_id();
-    $id_category = (int) ($data['id_category'] ?? 0);
-    $id_user = (int) ($_SESSION['user']['id_user'] ?? 0);
+    $id_category = trim((string) ($data['id_category'] ?? ''));
+    $id_user_sql = current_user_id_sql();
     $nama = trim($data['nama_dokumen'] ?? '');
     $keterangan = trim($data['keterangan'] ?? '');
-    $tanggal_upload = trim($data['tanggal_upload'] ?? date('Y-m-d'));
+    $tanggal_upload = date('Y-m-d');
 
-    if ($id_category <= 0 || $nama === '') {
+    if ($id_category === '' || $nama === '') {
         return false;
     }
 
@@ -88,6 +119,7 @@ function add_document($data, $file, $preview_file_upload = [])
     }
 
     $nama_safe = db_escape($nama);
+    $id_category_safe = db_escape($id_category);
     $keterangan_safe = db_escape($keterangan);
     $tanggal_safe = db_escape($tanggal_upload);
     $file_safe = db_escape($file_path);
@@ -95,7 +127,7 @@ function add_document($data, $file, $preview_file_upload = [])
 
     mysqli_query($conn, "INSERT INTO tb_dokumen
         (id_document, id_category, id_user, nama_dokumen, keterangan, tanggal_upload, file, preview_file, status)
-        VALUES ('$id_document', $id_category, $id_user, '$nama_safe', '$keterangan_safe', '$tanggal_safe', '$file_safe', $preview_safe, 'menunggu')
+        VALUES ('$id_document', '$id_category_safe', $id_user_sql, '$nama_safe', '$keterangan_safe', '$tanggal_safe', '$file_safe', $preview_safe, 'menunggu')
     ");
 
     return mysqli_affected_rows($conn);
@@ -112,15 +144,16 @@ function update_document($id_document, $data, $file, $preview_file_upload = [])
     }
 
     $id_safe = db_escape($id_document);
-    $id_category = (int) ($data['id_category'] ?? 0);
+    $id_category = trim((string) ($data['id_category'] ?? ''));
     $nama = trim($data['nama_dokumen'] ?? '');
     $keterangan = trim($data['keterangan'] ?? '');
-    $tanggal_upload = trim($data['tanggal_upload'] ?? date('Y-m-d'));
+    $tanggal_upload = trim($data['tanggal_upload'] ?? ($document['tanggal_upload'] ?? date('Y-m-d')));
 
-    if ($id_category <= 0 || $nama === '') {
+    if ($id_category === '' || $nama === '') {
         return false;
     }
 
+    $id_category_safe = db_escape($id_category);
     $nama_safe = db_escape($nama);
     $keterangan_safe = db_escape($keterangan);
     $tanggal_safe = db_escape($tanggal_upload);
@@ -153,11 +186,12 @@ function update_document($id_document, $data, $file, $preview_file_upload = [])
     }
 
     mysqli_query($conn, "UPDATE tb_dokumen
-        SET id_category = $id_category,
+        SET id_category = '$id_category_safe',
             nama_dokumen = '$nama_safe',
             keterangan = '$keterangan_safe',
             tanggal_upload = '$tanggal_safe',
             status = 'menunggu',
+            rejection_reason = NULL,
             approved_by = NULL,
             approved_at = NULL
             $file_sql
@@ -173,11 +207,12 @@ function approve_document($id_document)
     global $conn;
 
     $id_document = db_escape($id_document);
-    $id_user = (int) ($_SESSION['user']['id_user'] ?? 0);
+    $id_user_sql = current_user_id_sql();
 
     mysqli_query($conn, "UPDATE tb_dokumen
         SET status = 'disetujui',
-            approved_by = $id_user,
+            rejection_reason = NULL,
+            approved_by = $id_user_sql,
             approved_at = NOW()
         WHERE id_document = '$id_document'
     ");
@@ -185,7 +220,7 @@ function approve_document($id_document)
     return mysqli_affected_rows($conn);
 }
 
-function update_document_status($id_document, $status)
+function update_document_status($id_document, $status, $reason = '')
 {
     global $conn;
 
@@ -197,11 +232,13 @@ function update_document_status($id_document, $status)
 
     $id_document = db_escape($id_document);
     $status = db_escape($status);
-    $id_user = (int) ($_SESSION['user']['id_user'] ?? 0);
+    $id_user_sql = current_user_id_sql();
+    $reason = trim((string) $reason);
 
     if ($status === 'menunggu') {
         mysqli_query($conn, "UPDATE tb_dokumen
             SET status = 'menunggu',
+                rejection_reason = NULL,
                 approved_by = NULL,
                 approved_at = NULL
             WHERE id_document = '$id_document'
@@ -210,9 +247,28 @@ function update_document_status($id_document, $status)
         return mysqli_affected_rows($conn);
     }
 
+    if ($status === 'ditolak') {
+        if ($reason === '') {
+            return false;
+        }
+
+        $reason_safe = db_escape($reason);
+
+        mysqli_query($conn, "UPDATE tb_dokumen
+            SET status = 'ditolak',
+                rejection_reason = '$reason_safe',
+                approved_by = $id_user_sql,
+                approved_at = NOW()
+            WHERE id_document = '$id_document'
+        ");
+
+        return mysqli_affected_rows($conn);
+    }
+
     mysqli_query($conn, "UPDATE tb_dokumen
         SET status = '$status',
-            approved_by = $id_user,
+            rejection_reason = NULL,
+            approved_by = $id_user_sql,
             approved_at = NOW()
         WHERE id_document = '$id_document'
     ");
@@ -220,16 +276,24 @@ function update_document_status($id_document, $status)
     return mysqli_affected_rows($conn);
 }
 
-function reject_document($id_document)
+function reject_document($id_document, $reason = '')
 {
     global $conn;
 
+    $reason = trim((string) $reason);
+
+    if ($reason === '') {
+        return false;
+    }
+
     $id_document = db_escape($id_document);
-    $id_user = (int) ($_SESSION['user']['id_user'] ?? 0);
+    $id_user_sql = current_user_id_sql();
+    $reason_safe = db_escape($reason);
 
     mysqli_query($conn, "UPDATE tb_dokumen
         SET status = 'ditolak',
-            approved_by = $id_user,
+            rejection_reason = '$reason_safe',
+            approved_by = $id_user_sql,
             approved_at = NOW()
         WHERE id_document = '$id_document'
     ");
@@ -240,6 +304,16 @@ function reject_document($id_document)
 function delete_document($id_document)
 {
     global $conn;
+
+    $document = get_document($id_document);
+
+    if (!$document) {
+        return false;
+    }
+
+    if (!is_admin() && (string) ($document['id_user'] ?? '') !== current_user_id()) {
+        return false;
+    }
 
     $id_document = db_escape($id_document);
 

@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../functions/function.php';
-require_login();
+require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'update') {
-        $result = update_user($_POST['id_user'] ?? 0, $_POST);
+        $result = update_user($_POST['id_user'] ?? '', $_POST);
         set_flash($result >= 0 ? 'success' : 'error', $result >= 0 ? 'Berhasil' : 'Gagal', $result >= 0 ? 'Pengguna berhasil diperbarui.' : 'Pengguna belum bisa diperbarui.');
     }
 
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (($_GET['action'] ?? '') === 'delete') {
-    $result = delete_user($_GET['id'] ?? 0);
+    $result = delete_user($_GET['id'] ?? '');
 
     if ($result === -1) {
         set_flash('info', 'Ditahan', 'Akun yang sedang digunakan tidak bisa dihapus.');
@@ -61,16 +61,16 @@ $users = get_users();
       media="print"
       onload="this.media='all'"
     />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.24" rel="stylesheet" />
     <?php if (!empty($use_datatables)) : ?>
-    <link href="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.css')); ?>?v=1.24" rel="stylesheet" />
     <?php endif; ?>
-    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.24" rel="stylesheet" />
   </head>
   <body>
     <div class="loader">
@@ -196,15 +196,16 @@ $users = get_users();
                       </thead>
                       <tbody>
                         <?php foreach ($users as $user) : ?>
+                        <?php $user_modal_id = 'editUserModal' . html_id_suffix($user['id_user']); ?>
                         <tr>
-                          <td class="text-center"><?= (int) $user['id_user']; ?></td>
+                          <td class="text-center"><?= h($user['id_user']); ?></td>
                           <td><?= h($user['email']); ?></td>
                           <td><?= h($user['nama']); ?></td>
                           <td class="text-center"><?= h($user['tanggal_lahir']); ?></td>
                           <td class="text-center"><?= h($user['role']); ?></td>
                           <td class="text-center"><?= h(substr($user['created_at'], 0, 10)); ?></td>
                           <td class="text-center">
-                            <button type="button" class="btn btn-warning btn-icon btn-sm" data-toggle="modal" data-target="#editUserModal<?= (int) $user['id_user']; ?>" title="Ubah pengguna">
+                            <button type="button" class="btn btn-warning btn-icon btn-sm" data-toggle="modal" data-target="#<?= h($user_modal_id); ?>" title="Ubah pengguna">
                               <i class="material-icons">edit</i>
                             </button>
                           </td>
@@ -212,7 +213,7 @@ $users = get_users();
                             <a
                               href="#"
                               class="btn btn-danger btn-icon btn-sm js-confirm"
-                              data-href="<?= h(app_url('views/users/user_management.php?action=delete&id=' . (int) $user['id_user'])); ?>"
+                              data-href="<?= h(app_url('views/users/user_management.php?action=delete&id=' . rawurlencode($user['id_user']))); ?>"
                               data-title="Hapus pengguna?"
                               data-text="Data pengguna akan dihapus."
                               title="Hapus pengguna"
@@ -267,6 +268,13 @@ $users = get_users();
                 <label for="userBirthDate">Tanggal Lahir</label>
                 <input type="date" class="form-control" id="userBirthDate" name="tanggal_lahir" required />
               </div>
+              <div class="form-group">
+                <label for="userRole">Role</label>
+                <select id="userRole" class="form-control" name="role" required>
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
               <div class="form-group mb-0">
                 <label for="userPassword">Password</label>
                 <input type="password" class="form-control" id="userPassword" name="password" placeholder="Masukkan password" required />
@@ -282,12 +290,13 @@ $users = get_users();
     </div>
 
     <?php foreach ($users as $user) : ?>
-    <div class="modal fade" id="editUserModal<?= (int) $user['id_user']; ?>" tabindex="-1" role="dialog" aria-hidden="true">
+    <?php $user_modal_id = 'editUserModal' . html_id_suffix($user['id_user']); ?>
+    <div class="modal fade" id="<?= h($user_modal_id); ?>" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <form method="post" class="js-action-loading">
             <input type="hidden" name="action" value="update" />
-            <input type="hidden" name="id_user" value="<?= (int) $user['id_user']; ?>" />
+            <input type="hidden" name="id_user" value="<?= h($user['id_user']); ?>" />
             <div class="modal-header">
               <h5 class="modal-title">Ubah Pengguna</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -346,20 +355,20 @@ $users = get_users();
         setTimeout(hideLoader, 1500);
       })();
     </script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.24"></script>
     <?php if (!empty($use_datatables)) : ?>
-    <script src="<?= h(app_url('plugins/datatables/jquery.dataTables.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/dataTables.responsive.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('plugins/datatables/jquery.dataTables.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/dataTables.responsive.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.js')); ?>?v=1.24"></script>
     <?php endif; ?>
-    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.24"></script>
     <?php flash_script(); ?>
   </body>
 </html>

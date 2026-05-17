@@ -103,7 +103,14 @@ function document_file_extension($file_path)
 
 function document_preview_url($document)
 {
-    return 'files/preview.php?id=' . rawurlencode($document['id_document'] ?? '');
+    $url = 'files/preview.php?id=' . rawurlencode($document['id_document'] ?? '');
+    $preview_path = document_preview_path($document);
+
+    if ($preview_path !== '' && document_file_extension($preview_path) === 'pdf') {
+        return $url . '#toolbar=0&navpanes=0&scrollbar=1&view=FitH';
+    }
+
+    return $url;
 }
 
 function document_preview_path($document)

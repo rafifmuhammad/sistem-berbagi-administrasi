@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../functions/function.php';
-require_login();
+require_admin();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'update') {
-        $result = update_category($_POST['id_category'] ?? 0, $_POST);
+        $result = update_category($_POST['id_category'] ?? '', $_POST);
         set_flash($result >= 0 ? 'success' : 'error', $result >= 0 ? 'Berhasil' : 'Gagal', $result >= 0 ? 'Kategori berhasil diperbarui.' : 'Kategori belum bisa diperbarui.');
     }
 
@@ -19,8 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (($_GET['action'] ?? '') === 'delete') {
-    $result = delete_category($_GET['id'] ?? 0);
-    set_flash($result > 0 ? 'success' : 'error', $result > 0 ? 'Berhasil' : 'Gagal', $result > 0 ? 'Kategori berhasil dihapus.' : 'Kategori masih digunakan atau tidak ditemukan.');
+    $result = delete_category($_GET['id'] ?? '');
+    set_flash($result > 0 ? 'success' : 'error', $result > 0 ? 'Berhasil' : 'Gagal', $result > 0 ? 'Kategori dan dokumen di dalamnya berhasil dihapus.' : 'Kategori tidak ditemukan atau belum bisa dihapus.');
     redirect_to('views/categories/category_management.php');
 }
 
@@ -51,16 +51,16 @@ $categories = get_categories();
       media="print"
       onload="this.media='all'"
     />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.24" rel="stylesheet" />
     <?php if (!empty($use_datatables)) : ?>
-    <link href="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.css')); ?>?v=1.24" rel="stylesheet" />
     <?php endif; ?>
-    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.9" rel="stylesheet" />
-    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.9" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.24" rel="stylesheet" />
+    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.24" rel="stylesheet" />
   </head>
   <body>
     <div class="loader">
@@ -184,13 +184,14 @@ $categories = get_categories();
                       </thead>
                       <tbody>
                         <?php foreach ($categories as $index => $category) : ?>
+                        <?php $category_modal_id = 'editCategoryModal' . html_id_suffix($category['id_category']); ?>
                         <tr>
                           <td class="text-center"><?= $index + 1; ?></td>
                           <td class="text-center"><?= h($category['id_category']); ?></td>
                           <td><?= h($category['nama_kategori']); ?></td>
                           <td class="text-center"><?= (int) $category['total_dokumen']; ?></td>
                           <td class="text-center">
-                            <button type="button" class="btn btn-warning btn-icon btn-sm" data-toggle="modal" data-target="#editCategoryModal<?= (int) $category['id_category']; ?>" title="Ubah kategori">
+                            <button type="button" class="btn btn-warning btn-icon btn-sm" data-toggle="modal" data-target="#<?= h($category_modal_id); ?>" title="Ubah kategori">
                               <i class="material-icons">edit</i>
                             </button>
                           </td>
@@ -198,9 +199,9 @@ $categories = get_categories();
                             <a
                               href="#"
                               class="btn btn-danger btn-icon btn-sm js-confirm"
-                              data-href="<?= h(app_url('views/categories/category_management.php?action=delete&id=' . (int) $category['id_category'])); ?>"
+                              data-href="<?= h(app_url('views/categories/category_management.php?action=delete&id=' . rawurlencode($category['id_category']))); ?>"
                               data-title="Hapus kategori?"
-                              data-text="Kategori yang masih digunakan tidak dapat dihapus."
+                              data-text="Dokumen di dalam kategori ini ikut dihapus."
                               title="Hapus kategori"
                             >
                               <i class="material-icons">delete_outline</i>
@@ -256,12 +257,13 @@ $categories = get_categories();
     </div>
 
     <?php foreach ($categories as $category) : ?>
-    <div class="modal fade" id="editCategoryModal<?= (int) $category['id_category']; ?>" tabindex="-1" role="dialog" aria-hidden="true">
+    <?php $category_modal_id = 'editCategoryModal' . html_id_suffix($category['id_category']); ?>
+    <div class="modal fade" id="<?= h($category_modal_id); ?>" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <form method="post" class="js-action-loading">
             <input type="hidden" name="action" value="update" />
-            <input type="hidden" name="id_category" value="<?= (int) $category['id_category']; ?>" />
+            <input type="hidden" name="id_category" value="<?= h($category['id_category']); ?>" />
             <div class="modal-header">
               <h5 class="modal-title">Ubah Kategori</h5>
               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -308,20 +310,20 @@ $categories = get_categories();
         setTimeout(hideLoader, 1500);
       })();
     </script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.24"></script>
     <?php if (!empty($use_datatables)) : ?>
-    <script src="<?= h(app_url('plugins/datatables/jquery.dataTables.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/dataTables.responsive.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('plugins/datatables/jquery.dataTables.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/dataTables.responsive.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.js')); ?>?v=1.24"></script>
     <?php endif; ?>
-    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.9"></script>
-    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.9"></script>
+    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.24"></script>
+    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.24"></script>
     <?php flash_script(); ?>
   </body>
 </html>

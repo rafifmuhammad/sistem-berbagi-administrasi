@@ -18,8 +18,17 @@ function is_admin()
 function require_login()
 {
     if (!is_logged_in()) {
-        set_flash('info', 'Masuk', 'Silakan masuk untuk melanjutkan.');
-        redirect_to('login.php');
+        redirect_to('index.php');
+    }
+}
+
+function require_admin()
+{
+    require_login();
+
+    if (!is_admin()) {
+        set_flash('error', 'Ditolak', 'Akses ini hanya untuk admin.');
+        redirect_to('views/documents/document_management.php');
     }
 }
 
@@ -47,6 +56,7 @@ function register_user($data)
 {
     global $conn;
 
+    $id_user = make_entity_id('USR');
     $email = trim($data['email'] ?? '');
     $nama = trim($data['nama'] ?? '');
     $tanggal_lahir = trim($data['tanggal_lahir'] ?? '');
@@ -67,8 +77,8 @@ function register_user($data)
     $password_hash = db_escape(password_hash($password, PASSWORD_DEFAULT));
 
     mysqli_query($conn, "INSERT INTO tb_user
-        (email, nama, tanggal_lahir, password, role)
-        VALUES ('$email_safe', '$nama_safe', $tanggal_safe, '$password_hash', 'user')
+        (id_user, email, nama, tanggal_lahir, password, role)
+        VALUES ('$id_user', '$email_safe', '$nama_safe', $tanggal_safe, '$password_hash', 'user')
     ");
 
     return mysqli_affected_rows($conn);
