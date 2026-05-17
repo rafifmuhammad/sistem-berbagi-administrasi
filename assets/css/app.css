@@ -1,0 +1,337 @@
+body {
+    color: #404854;
+}
+
+.auth-watermark {
+    color: #9aa6b6;
+    font-size: 12px;
+    margin-top: 14px;
+    text-align: center;
+}
+
+.action-loading-overlay {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.72);
+    bottom: 0;
+    display: none;
+    justify-content: center;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 2000;
+}
+
+.action-loading-overlay.is-active {
+    display: flex;
+}
+
+.action-loader {
+    animation: action-loader-spin 0.8s linear infinite;
+    border: 3px solid #dfe5ef;
+    border-radius: 50%;
+    border-top-color: #037afb;
+    height: 38px;
+    width: 38px;
+}
+
+@keyframes action-loader-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.lime-sidebar .lime-sidebar-inner {
+    padding-left: 40px;
+    padding-right: 34px;
+}
+
+.lime-sidebar .lime-sidebar-inner ul li {
+    overflow: visible;
+}
+
+.lime-sidebar .lime-sidebar-inner ul li a {
+    white-space: nowrap;
+}
+
+@media (min-width: 992px) {
+    body.sidebar-show {
+        overflow-x: hidden;
+    }
+
+    .sidebar-show .lime-header,
+    .sidebar-show .lime-container {
+        margin-left: 300px;
+        transform: none;
+        width: calc(100% - 300px);
+    }
+
+    .sidebar-show .lime-header .search {
+        max-width: 560px;
+        width: 44%;
+    }
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.card .dataTables_wrapper {
+    margin-top: 4px;
+}
+
+.card .dataTables_wrapper table.dataTable {
+    border-bottom: 0;
+    margin-top: 18px !important;
+}
+
+.card .dataTables_wrapper table.dataTable thead th {
+    border-bottom: 1px solid #e6e6e6 !important;
+    color: #23395d;
+    font-weight: 600;
+}
+
+.card .dataTables_wrapper table.dataTable tbody tr,
+.card .dataTables_wrapper table.dataTable tbody tr.odd,
+.card .dataTables_wrapper table.dataTable tbody tr.even {
+    background: #fff !important;
+}
+
+.card .dataTables_wrapper table.dataTable tbody td {
+    color: #384c6d;
+}
+
+.table th,
+.table td {
+    vertical-align: middle;
+}
+
+.table th {
+    white-space: nowrap;
+}
+
+.toolbar-row {
+    align-items: flex-end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.toolbar-row .form-group {
+    margin-bottom: 0;
+    min-width: 180px;
+}
+
+.toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.date-filter .form-group {
+    margin-bottom: 12px;
+}
+
+.date-filter label {
+    color: #7d7d83;
+}
+
+.status-select {
+    min-width: 118px;
+}
+
+.table-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.table-actions .btn {
+    align-items: center;
+    display: inline-flex;
+}
+
+.action-dropdown .dropdown-toggle {
+    align-items: center;
+    display: inline-flex;
+}
+
+.action-dropdown .dropdown-menu {
+    min-width: 144px;
+}
+
+.action-dropdown .dropdown-item {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+}
+
+.action-dropdown .dropdown-item .material-icons,
+.action-dropdown .dropdown-item i {
+    font-size: 16px;
+    line-height: 1;
+    margin-right: 0;
+}
+
+.btn .material-icons,
+.btn i {
+    font-size: 16px;
+    line-height: 1;
+    margin-right: 4px;
+    vertical-align: -2px;
+}
+
+.btn-icon {
+    align-items: center;
+    display: inline-flex;
+    height: 31px;
+    justify-content: center;
+    padding: 0;
+    width: 31px;
+}
+
+.btn-icon .material-icons,
+.btn-icon i {
+    font-size: 17px;
+    margin-right: 0;
+}
+
+.badge-soft-blue {
+    background: #e8f2ff;
+    color: #037afb;
+}
+
+.badge-soft-green {
+    background: #e7f8f1;
+    color: #16875f;
+}
+
+.badge-soft-amber {
+    background: #fff3dc;
+    color: #9a6500;
+}
+
+.badge-soft-slate {
+    background: #eef1f6;
+    color: #596579;
+}
+
+.dataTables_wrapper {
+    width: 100%;
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    border: 1px solid #dfe5ef;
+    border-radius: 4px;
+    margin-left: 0;
+    padding: 6px 10px;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    min-width: 76px;
+    width: auto;
+}
+
+.dataTables_wrapper .dataTables_length label,
+.dataTables_wrapper .dataTables_filter label {
+    color: #7d7d83;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0;
+}
+
+.dataTables_wrapper .dataTables_filter {
+    text-align: right;
+}
+
+.dataTables_wrapper .pagination {
+    justify-content: flex-end;
+}
+
+.stat-card .material-icons {
+    color: #037afb;
+    font-size: 28px;
+}
+
+.stat-card h2 {
+    color: #37414d;
+    font-weight: 700;
+}
+
+.document-identity {
+    border-top: 1px solid #eef1f6;
+    margin-top: 16px;
+    padding-top: 16px;
+}
+
+.document-identity p {
+    color: #404854;
+    margin-bottom: 12px;
+}
+
+.document-identity span {
+    color: #7d7d83;
+    display: block;
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+.document-viewer {
+    border: 1px solid #eef1f6;
+    border-radius: 4px;
+    height: 620px;
+    width: 100%;
+}
+
+@media (max-width: 991.98px) {
+    .toolbar-row {
+        align-items: stretch;
+    }
+
+    .toolbar-row .form-group,
+    .toolbar-actions {
+        flex: 1 1 100%;
+    }
+
+    .toolbar-actions .btn {
+        flex: 1 1 auto;
+    }
+
+    .dataTables_wrapper .row > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_filter label,
+    .dataTables_wrapper .dataTables_filter input,
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_length label {
+        width: 100%;
+    }
+
+    .dataTables_wrapper .dataTables_filter input,
+    .dataTables_wrapper .dataTables_length select {
+        margin-left: 0;
+        margin-top: 6px;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        width: 100%;
+    }
+
+    .dataTables_wrapper .pagination {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .table {
+        min-width: 760px;
+    }
+}
