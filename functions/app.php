@@ -1,15 +1,28 @@
 <?php
 
 if (!defined('APP_BASE_PATH')) {
-    $request_uri = str_replace('\\', '/', $_SERVER['REQUEST_URI'] ?? '');
     $default_base = '/sistem-berbagi-administrasi';
-    $base_path = getenv('APP_BASE_PATH') ?: $default_base;
+    $base_path = getenv('APP_BASE_PATH');
 
-    if ($base_path !== '' && strpos($request_uri, $base_path) === false) {
-        $base_path = '';
+    if ($base_path === false) {
+        $document_root = realpath($_SERVER['DOCUMENT_ROOT'] ?? '');
+        $project_root = realpath(__DIR__ . '/../');
+
+        if ($document_root && $project_root && strpos($project_root, $document_root) === 0) {
+            $base_path = '/' . trim(str_replace('\\', '/', substr($project_root, strlen($document_root))), '/');
+            if ($base_path === '/') {
+                $base_path = '';
+            }
+        } else {
+            $base_path = $default_base;
+        }
     }
 
-    define('APP_BASE_PATH', rtrim($base_path, '/'));
+    if ($base_path !== '') {
+        $base_path = '/' . trim((string) $base_path, '/');
+    }
+
+    define('APP_BASE_PATH', rtrim((string) $base_path, '/'));
 }
 
 if (!function_exists('app_url')) {
