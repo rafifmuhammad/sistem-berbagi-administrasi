@@ -261,14 +261,29 @@ function document_preview_url($document)
 function document_preview_path($document)
 {
     $preview_file = $document['preview_file'] ?? '';
+    $document_id = (string) ($document['id_document'] ?? '');
 
-    if (make_preview_file($preview_file) !== '') {
+    if (preview_file_belongs_to_document($preview_file, $document_id) && make_preview_file($preview_file) !== '') {
         return $preview_file;
     }
 
     $file = $document['file'] ?? '';
 
     return make_preview_file($file);
+}
+
+function preview_file_belongs_to_document($preview_file, $document_id)
+{
+    $preview_file = trim((string) $preview_file);
+    $document_id = trim((string) $document_id);
+
+    if ($preview_file === '' || $document_id === '') {
+        return false;
+    }
+
+    $file_name = basename(str_replace('\\', '/', $preview_file));
+
+    return strpos($file_name, $document_id . '_preview_') === 0;
 }
 
 function docx_node_text_html($node)
