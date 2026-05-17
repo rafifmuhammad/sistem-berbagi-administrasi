@@ -26,16 +26,16 @@ $categories = get_categories();
       media="print"
       onload="this.media='all'"
     />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.26" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.26" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.27" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.27" rel="stylesheet" />
     <?php if (!empty($use_datatables)) : ?>
-    <link href="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.css')); ?>?v=1.26" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.css')); ?>?v=1.26" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.css')); ?>?v=1.27" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.css')); ?>?v=1.27" rel="stylesheet" />
     <?php endif; ?>
-    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.26" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.26" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.26" rel="stylesheet" />
-    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.26" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.27" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.27" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.27" rel="stylesheet" />
+    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.27" rel="stylesheet" />
   </head>
   <body>
     <div class="loader">
@@ -153,7 +153,7 @@ $categories = get_categories();
                           <td><?= h($document['nama_dokumen']); ?></td>
                           <td><?= h($document['nama_kategori']); ?></td>
                           <td class="text-center">
-                            <a href="#" class="btn btn-outline-info btn-sm preview-btn" data-file="<?= h(app_url(document_preview_url($document))); ?>">
+                            <a href="<?= h(app_url(document_preview_url($document))); ?>" class="btn btn-outline-info btn-sm preview-btn" data-file="<?= h(app_url(document_preview_url($document))); ?>">
                               <i class="material-icons">visibility</i> Lihat
                             </a>
                           </td>
@@ -192,8 +192,8 @@ $categories = get_categories();
             <h5 class="modal-title">Preview Dokumen</h5>
             <button type="button" class="close" data-dismiss="modal">&times;</button>
           </div>
-          <div class="modal-body">
-            <iframe id="pdfFrame" width="100%" height="520"></iframe>
+          <div class="modal-body preview-modal-body">
+            <iframe id="pdfFrame" class="preview-frame" title="Preview dokumen"></iframe>
           </div>
         </div>
       </div>
@@ -223,20 +223,20 @@ $categories = get_categories();
         setTimeout(hideLoader, 1500);
       })();
     </script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.26"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.26"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.26"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.26"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.27"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.27"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.27"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.27"></script>
     <?php if (!empty($use_datatables)) : ?>
-    <script src="<?= h(app_url('plugins/datatables/jquery.dataTables.min.js')); ?>?v=1.26"></script>
-    <script src="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.js')); ?>?v=1.26"></script>
-    <script src="<?= h(app_url('plugins/datatables/dataTables.responsive.min.js')); ?>?v=1.26"></script>
-    <script src="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.js')); ?>?v=1.26"></script>
+    <script src="<?= h(app_url('plugins/datatables/jquery.dataTables.min.js')); ?>?v=1.27"></script>
+    <script src="<?= h(app_url('plugins/datatables/dataTables.bootstrap4.min.js')); ?>?v=1.27"></script>
+    <script src="<?= h(app_url('plugins/datatables/dataTables.responsive.min.js')); ?>?v=1.27"></script>
+    <script src="<?= h(app_url('plugins/datatables/responsive.bootstrap4.min.js')); ?>?v=1.27"></script>
     <?php endif; ?>
-    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.26"></script>
-    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.26"></script>
-    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.26"></script>
-    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.26"></script>
+    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.27"></script>
+    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.27"></script>
+    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.27"></script>
+    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.27"></script>
     <?php flash_script(); ?>
   </body>
 </html>

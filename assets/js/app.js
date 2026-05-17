@@ -281,8 +281,12 @@
         $(document).on("click", ".preview-btn", function (event) {
             event.preventDefault();
 
-            var file = $(this).attr("data-file") || $(this).data("file");
+            var file = $(this).attr("data-file") || $(this).attr("href") || $(this).data("file");
             var $frame = $("#pdfFrame");
+
+            if (!file || file === "#") {
+                return;
+            }
 
             $frame
                 .removeAttr("sandbox")

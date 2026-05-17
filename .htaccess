@@ -1,0 +1,89 @@
+RewriteEngine On
+# RewriteBase sengaja tidak dipakai agar route tetap jalan di:
+# /sistem-berbagi-administrasi untuk lokal dan /app/sistem-berbagi-administrasi untuk server.
+
+RewriteCond %{HTTP_HOST} ^localhost(:[0-9]+)?$ [NC]
+RewriteRule ^app/app/sistem-berbagi-administrasi/?(.*)$ /sistem-berbagi-administrasi/$1 [R=302,L]
+
+RewriteRule ^app/app/sistem-berbagi-administrasi/?(.*)$ /app/sistem-berbagi-administrasi/$1 [R=302,L]
+
+RewriteRule ^(.+)//+$ $1/ [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/index\.php[?\s]
+RewriteRule ^index\.php$ ./ [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/login\.php[?\s]
+RewriteRule ^login\.php$ login/ [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/register\.php[?\s]
+RewriteRule ^register\.php$ register/ [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/logout\.php[?\s]
+RewriteRule ^logout\.php$ logout/ [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/views/dashboard/dashboard\.php[?\s]
+RewriteRule ^views/dashboard/dashboard\.php$ dashboard/ [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/views/documents/document_management\.php[?\s]
+RewriteRule ^views/documents/document_management\.php$ documents/ [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/views/documents/document_add\.php[?\s]
+RewriteRule ^views/documents/document_add\.php$ documents/add/ [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/views/documents/document_edit\.php\?id=([^&\s]+)
+RewriteRule ^views/documents/document_edit\.php$ documents/%1/edit/? [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/views/documents/document_detail\.php\?id=([^&\s]+)
+RewriteRule ^views/documents/document_detail\.php$ documents/%1/? [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/views/documents/document_action\.php\?action=(approve|reject|delete)&id=([^&\s]+)
+RewriteRule ^views/documents/document_action\.php$ documents/%2/%1/? [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/views/documents/document_action\.php[?\s]
+RewriteRule ^views/documents/document_action\.php$ documents/action/ [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/views/categories/category_management\.php\?action=delete&id=([^&\s]+)
+RewriteRule ^views/categories/category_management\.php$ categories/%1/delete/? [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/views/categories/category_management\.php[?\s]
+RewriteRule ^views/categories/category_management\.php$ categories/ [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/views/users/user_management\.php\?action=delete&id=([^&\s]+)
+RewriteRule ^views/users/user_management\.php$ users/%1/delete/? [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/views/users/user_management\.php[?\s]
+RewriteRule ^views/users/user_management\.php$ users/ [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/files/preview\.php\?id=([^&\s]+)
+RewriteRule ^files/preview\.php$ files/preview/%1/? [R=302,L]
+
+RewriteCond %{THE_REQUEST} \s+/(?:app/)?sistem-berbagi-administrasi/files/download\.php\?id=([^&\s]+)
+RewriteRule ^files/download\.php$ files/download/%1/? [R=302,L]
+
+RewriteRule ^app/(login|register|logout|dashboard|documents|categories|users|files)(/.*)?$ $1$2 [R=302,L]
+RewriteRule ^app/(assets|plugins|lime|documents)/(.*)$ $1/$2 [L,QSA]
+
+RewriteRule ^(?:app/)?$ index.php [L,QSA]
+RewriteRule ^(?:app/)?public/?$ index.php [L,QSA]
+RewriteRule ^(?:app/)?login/?$ login.php [L,QSA]
+RewriteRule ^(?:app/)?register/?$ register.php [L,QSA]
+RewriteRule ^(?:app/)?logout/?$ logout.php [L,QSA]
+RewriteRule ^(?:app/)?dashboard/?$ views/dashboard/dashboard.php [L,QSA]
+
+RewriteRule ^(?:app/)?documents/?$ views/documents/document_management.php [L,QSA]
+RewriteRule ^(?:app/)?documents/action/?$ views/documents/document_action.php [L,QSA]
+RewriteRule ^(?:app/)?documents/add/?$ views/documents/document_add.php [L,QSA]
+RewriteRule ^(?:app/)?documents/([^/]+)/edit/?$ views/documents/document_edit.php?id=$1 [L,QSA]
+RewriteRule ^(?:app/)?documents/([^/]+)/approve/?$ views/documents/document_action.php?action=approve&id=$1 [L,QSA]
+RewriteRule ^(?:app/)?documents/([^/]+)/reject/?$ views/documents/document_action.php?action=reject&id=$1 [L,QSA]
+RewriteRule ^(?:app/)?documents/([^/]+)/delete/?$ views/documents/document_action.php?action=delete&id=$1 [L,QSA]
+RewriteRule ^(?:app/)?documents/([^/]+)/?$ views/documents/document_detail.php?id=$1 [L,QSA]
+
+RewriteRule ^(?:app/)?categories/?$ views/categories/category_management.php [L,QSA]
+RewriteRule ^(?:app/)?categories/([^/]+)/delete/?$ views/categories/category_management.php?action=delete&id=$1 [L,QSA]
+
+RewriteRule ^(?:app/)?users/?$ views/users/user_management.php [L,QSA]
+RewriteRule ^(?:app/)?users/([^/]+)/delete/?$ views/users/user_management.php?action=delete&id=$1 [L,QSA]
+
+RewriteRule ^(?:app/)?files/preview/([^/]+)/?$ files/preview.php?id=$1 [L,QSA]
+RewriteRule ^(?:app/)?files/download/([^/]+)/?$ files/download.php?id=$1 [L,QSA]
