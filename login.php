@@ -36,12 +36,12 @@ $page_title = 'Masuk - Outline';
       media="print"
       onload="this.media='all'"
     />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.27" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.27" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.27" rel="stylesheet" />
-    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.27" rel="stylesheet" />
-    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.27" rel="stylesheet" />
-    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.27" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/bootstrap/css/bootstrap.min.css')); ?>?v=1.28" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/plugins/font-awesome/css/all.min.css')); ?>?v=1.28" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/lime.min.css')); ?>?v=1.28" rel="stylesheet" />
+    <link href="<?= h(app_url('lime/theme/assets/css/custom.css')); ?>?v=1.28" rel="stylesheet" />
+    <link href="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.css')); ?>?v=1.28" rel="stylesheet" />
+    <link href="<?= h(app_url('assets/css/app.css')); ?>?v=1.28" rel="stylesheet" />
   </head>
   <body class="login-page err-500">
     <div class="loader">
@@ -104,14 +104,14 @@ $page_title = 'Masuk - Outline';
         setTimeout(hideLoader, 1500);
       })();
     </script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.27"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.27"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.27"></script>
-    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.27"></script>
-    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.27"></script>
-    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.27"></script>
-    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.27"></script>
-    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.27"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery/jquery-3.1.0.min.js')); ?>?v=1.28"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/popper.min.js')); ?>?v=1.28"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/bootstrap/js/bootstrap.min.js')); ?>?v=1.28"></script>
+    <script src="<?= h(app_url('lime/theme/assets/plugins/jquery-slimscroll/jquery.slimscroll.min.js')); ?>?v=1.28"></script>
+    <script src="<?= h(app_url('lime/theme/assets/js/lime.min.js')); ?>?v=1.28"></script>
+    <script src="<?= h(app_url('plugins/sweet-alert2/sweetalert2.min.js')); ?>?v=1.28"></script>
+    <script src="<?= h(app_url('assets/js/action-loading.js')); ?>?v=1.28"></script>
+    <script src="<?= h(app_url('assets/js/app.js')); ?>?v=1.28"></script>
     <?php flash_script(); ?>
   </body>
 </html>

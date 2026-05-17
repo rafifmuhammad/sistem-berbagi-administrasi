@@ -184,8 +184,8 @@ header('Content-Type: text/html; charset=utf-8');
     </main>
 
     <?php if ($source_extension === 'docx') : ?>
-    <script src="<?= h(app_url('plugins/datatables/jszip.min.js')); ?>?v=1.27"></script>
-    <script src="<?= h(app_url('plugins/docx-preview/docx-preview.min.js')); ?>?v=1.27"></script>
+    <script src="<?= h(app_url('plugins/datatables/jszip.min.js')); ?>?v=1.28"></script>
+    <script src="<?= h(app_url('plugins/docx-preview/docx-preview.min.js')); ?>?v=1.28"></script>
     <script>
       (function () {
         var target = document.getElementById('docxPreview');

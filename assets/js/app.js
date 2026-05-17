@@ -174,6 +174,23 @@
         return base + separator + "preview_v=" + Date.now() + hash;
     }
 
+    function scrollToTable(tableId) {
+        var table = document.getElementById(tableId);
+
+        if (!table) {
+            return;
+        }
+
+        var target = table.closest(".card") || table;
+        var headerOffset = 96;
+        var top = target.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+
+        window.scrollTo({
+            top: Math.max(top, 0),
+            behavior: "smooth"
+        });
+    }
+
     $(function () {
         var publicTable = initTable("#publicDocumentsTable");
         var usersTable = initTable("#usersTable");
@@ -209,10 +226,15 @@
             }
         });
 
+        $("[data-table-search]").on("focus", function () {
+            scrollToTable($(this).data("table-search"));
+        });
+
         $("[data-table-search]").on("input", function () {
             var tableId = $(this).data("table-search");
             var table = $("#" + tableId).DataTable();
             table.search(this.value).draw();
+            scrollToTable(tableId);
         });
 
         $(".js-demo-submit").on("submit", function (event) {

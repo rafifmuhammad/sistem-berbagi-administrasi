@@ -1,6 +1,6 @@
 RewriteEngine On
-# Clean URL bersifat opsional. Link internal aplikasi tetap memakai path PHP asli
-# agar aman di server yang konfigurasi rewrite-nya berbeda.
+# Clean URL aplikasi. Jika server deploy gagal membuka route ini,
+# pastikan mod_rewrite aktif dan AllowOverride mengizinkan .htaccess.
 
 RewriteRule ^app/(assets|plugins|lime|documents)/(.*)$ $1/$2 [L,QSA]
 
