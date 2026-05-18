@@ -34,45 +34,75 @@ function document_status_badge($status, $reason = '', $clickable_reason = false)
 
 function current_user_id()
 {
-    return trim((string) ($_SESSION['user']['id_user'] ?? ''));
+    return clean_entity_id($_SESSION['user']['id_user'] ?? '', 'USR');
 }
 
 function get_documents($approved_only = false, $owner_id = null)
 {
     $conditions = [];
+    $types = '';
+    $params = [];
 
     if ($approved_only) {
         $conditions[] = "d.status = 'disetujui'";
     }
 
     if ($owner_id !== null && trim((string) $owner_id) !== '') {
-        $owner_safe = db_escape($owner_id);
-        $conditions[] = "d.id_user = '$owner_safe'";
+        $owner_id = clean_entity_id($owner_id, 'USR');
+
+        if ($owner_id === '') {
+            return [];
+        }
+
+        $conditions[] = 'd.id_user = ?';
+        $types .= 's';
+        $params[] = $owner_id;
     }
 
     $where = !empty($conditions) ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
-    return query("SELECT d.*, c.nama_kategori, u.nama AS uploader, a.nama AS approver
+    return db_select("SELECT d.*, c.nama_kategori, u.nama AS uploader, a.nama AS approver
         FROM tb_dokumen d
         JOIN tb_kategori c ON c.id_category = d.id_category
         LEFT JOIN tb_user u ON u.id_user = d.id_user
         LEFT JOIN tb_user a ON a.id_user = d.approved_by
         $where
         ORDER BY d.created_at DESC
+    ", $types, $params);
+}
+
+function get_dashboard_documents($limit = 8)
+{
+    $limit = max(1, (int) $limit);
+
+    return query("SELECT d.*, c.nama_kategori, u.nama AS uploader, a.nama AS approver
+        FROM tb_dokumen d
+        JOIN tb_kategori c ON c.id_category = d.id_category
+        LEFT JOIN tb_user u ON u.id_user = d.id_user
+        LEFT JOIN tb_user a ON a.id_user = d.approved_by
+        ORDER BY
+            CASE WHEN d.status = 'menunggu' THEN 0 ELSE 1 END,
+            d.created_at DESC
+        LIMIT $limit
     ");
 }
 
 function get_document($id_document)
 {
-    $id_document = db_escape($id_document);
-    $rows = query("SELECT d.*, c.nama_kategori, u.nama AS uploader, a.nama AS approver
+    $id_document = clean_entity_id($id_document, 'DOC');
+
+    if ($id_document === '') {
+        return null;
+    }
+
+    $rows = db_select("SELECT d.*, c.nama_kategori, u.nama AS uploader, a.nama AS approver
         FROM tb_dokumen d
         JOIN tb_kategori c ON c.id_category = d.id_category
         LEFT JOIN tb_user u ON u.id_user = d.id_user
         LEFT JOIN tb_user a ON a.id_user = d.approved_by
-        WHERE d.id_document = '$id_document'
+        WHERE d.id_document = ?
         LIMIT 1
-    ");
+    ", 's', [$id_document]);
 
     return $rows[0] ?? null;
 }
@@ -82,25 +112,16 @@ function next_document_id()
     return make_entity_id('DOC');
 }
 
-function current_user_id_sql()
-{
-    $id_user = current_user_id();
-
-    return $id_user !== '' ? "'" . db_escape($id_user) . "'" : 'NULL';
-}
-
 function add_document($data, $file, $preview_file_upload = [])
 {
-    global $conn;
-
     $id_document = next_document_id();
-    $id_category = trim((string) ($data['id_category'] ?? ''));
-    $id_user_sql = current_user_id_sql();
-    $nama = trim($data['nama_dokumen'] ?? '');
-    $keterangan = trim($data['keterangan'] ?? '');
+    $id_category = clean_entity_id($data['id_category'] ?? '', 'CAT');
+    $id_user = current_user_id();
+    $nama = clean_input_text($data['nama_dokumen'] ?? '', 180);
+    $keterangan = clean_input_text($data['keterangan'] ?? '', 2000);
     $tanggal_upload = date('Y-m-d');
 
-    if ($id_category === '' || $nama === '') {
+    if (!is_valid_entity_id($id_document, 'DOC') || $id_category === '' || $id_user === '' || $nama === '') {
         return false;
     }
 
@@ -119,47 +140,45 @@ function add_document($data, $file, $preview_file_upload = [])
         return false;
     }
 
-    $nama_safe = db_escape($nama);
-    $id_category_safe = db_escape($id_category);
-    $keterangan_safe = db_escape($keterangan);
-    $tanggal_safe = db_escape($tanggal_upload);
-    $file_safe = db_escape($file_path);
-    $preview_safe = $preview_file !== '' ? "'" . db_escape($preview_file) . "'" : 'NULL';
+    $preview_file = $preview_file !== '' ? $preview_file : null;
 
-    mysqli_query($conn, "INSERT INTO tb_dokumen
+    return db_execute("INSERT INTO tb_dokumen
         (id_document, id_category, id_user, nama_dokumen, keterangan, tanggal_upload, file, preview_file, status)
-        VALUES ('$id_document', '$id_category_safe', $id_user_sql, '$nama_safe', '$keterangan_safe', '$tanggal_safe', '$file_safe', $preview_safe, 'menunggu')
-    ");
-
-    return mysqli_affected_rows($conn);
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'menunggu')
+    ", 'ssssssss', [$id_document, $id_category, $id_user, $nama, $keterangan, $tanggal_upload, $file_path, $preview_file]);
 }
 
 function update_document($id_document, $data, $file, $preview_file_upload = [])
 {
-    global $conn;
-
+    $id_document = clean_entity_id($id_document, 'DOC');
     $document = get_document($id_document);
 
     if (!$document) {
         return false;
     }
 
-    $id_safe = db_escape($id_document);
-    $id_category = trim((string) ($data['id_category'] ?? ''));
-    $nama = trim($data['nama_dokumen'] ?? '');
-    $keterangan = trim($data['keterangan'] ?? '');
-    $tanggal_upload = trim($data['tanggal_upload'] ?? ($document['tanggal_upload'] ?? date('Y-m-d')));
+    $id_category = clean_entity_id($data['id_category'] ?? '', 'CAT');
+    $nama = clean_input_text($data['nama_dokumen'] ?? '', 180);
+    $keterangan = clean_input_text($data['keterangan'] ?? '', 2000);
+    $tanggal_upload = clean_input_text($data['tanggal_upload'] ?? ($document['tanggal_upload'] ?? date('Y-m-d')), 10);
 
-    if ($id_category === '' || $nama === '') {
+    if ($id_category === '' || $nama === '' || !is_valid_date_string($tanggal_upload)) {
         return false;
     }
 
-    $id_category_safe = db_escape($id_category);
-    $nama_safe = db_escape($nama);
-    $keterangan_safe = db_escape($keterangan);
-    $tanggal_safe = db_escape($tanggal_upload);
-    $file_sql = '';
-    $preview_sql = '';
+    $sets = [
+        'id_category = ?',
+        'nama_dokumen = ?',
+        'keterangan = ?',
+        'tanggal_upload = ?',
+        "status = 'menunggu'",
+        'rejection_reason = NULL',
+        'approved_by = NULL',
+        'approved_at = NULL',
+    ];
+    $types = 'ssss';
+    $params = [$id_category, $nama, $keterangan, $tanggal_upload];
+    $preview_param_index = null;
 
     if (uploaded_file_was_submitted($file)) {
         $file_path = move_document_file($file, $id_document);
@@ -169,10 +188,14 @@ function update_document($id_document, $data, $file, $preview_file_upload = [])
         }
 
         $preview_file = make_preview_file($file_path);
-        $file_safe = db_escape($file_path);
-        $preview_safe = $preview_file !== '' ? "'" . db_escape($preview_file) . "'" : 'NULL';
-        $file_sql = ", file = '$file_safe'";
-        $preview_sql = ", preview_file = $preview_safe";
+        $preview_file = $preview_file !== '' ? $preview_file : null;
+
+        $sets[] = 'file = ?';
+        $sets[] = 'preview_file = ?';
+        $types .= 'ss';
+        $params[] = $file_path;
+        $params[] = $preview_file;
+        $preview_param_index = count($params) - 1;
     }
 
     if (uploaded_file_was_submitted($preview_file_upload)) {
@@ -182,129 +205,110 @@ function update_document($id_document, $data, $file, $preview_file_upload = [])
             return false;
         }
 
-        $preview_safe = db_escape($preview_file);
-        $preview_sql = ", preview_file = '$preview_safe'";
+        if ($preview_param_index !== null) {
+            $params[$preview_param_index] = $preview_file;
+        } else {
+            $sets[] = 'preview_file = ?';
+            $types .= 's';
+            $params[] = $preview_file;
+        }
     }
 
-    mysqli_query($conn, "UPDATE tb_dokumen
-        SET id_category = '$id_category_safe',
-            nama_dokumen = '$nama_safe',
-            keterangan = '$keterangan_safe',
-            tanggal_upload = '$tanggal_safe',
-            status = 'menunggu',
-            rejection_reason = NULL,
-            approved_by = NULL,
-            approved_at = NULL
-            $file_sql
-            $preview_sql
-        WHERE id_document = '$id_safe'
-    ");
+    $types .= 's';
+    $params[] = $id_document;
 
-    return mysqli_affected_rows($conn);
+    return db_execute('UPDATE tb_dokumen SET ' . implode(', ', $sets) . ' WHERE id_document = ?', $types, $params);
 }
 
 function approve_document($id_document)
 {
-    global $conn;
+    $id_document = clean_entity_id($id_document, 'DOC');
+    $id_user = current_user_id();
 
-    $id_document = db_escape($id_document);
-    $id_user_sql = current_user_id_sql();
+    if ($id_document === '' || $id_user === '') {
+        return false;
+    }
 
-    mysqli_query($conn, "UPDATE tb_dokumen
+    return db_execute("UPDATE tb_dokumen
         SET status = 'disetujui',
             rejection_reason = NULL,
-            approved_by = $id_user_sql,
+            approved_by = ?,
             approved_at = NOW()
-        WHERE id_document = '$id_document'
-    ");
-
-    return mysqli_affected_rows($conn);
+        WHERE id_document = ?
+    ", 'ss', [$id_user, $id_document]);
 }
 
 function update_document_status($id_document, $status, $reason = '')
 {
-    global $conn;
-
     $allowed = ['menunggu', 'disetujui', 'ditolak'];
+    $id_document = clean_entity_id($id_document, 'DOC');
 
-    if (!in_array($status, $allowed, true)) {
+    if ($id_document === '' || !in_array($status, $allowed, true)) {
         return false;
     }
 
-    $id_document = db_escape($id_document);
-    $status = db_escape($status);
-    $id_user_sql = current_user_id_sql();
-    $reason = trim((string) $reason);
+    $id_user = current_user_id();
+    $reason = clean_input_text($reason, 1000);
 
     if ($status === 'menunggu') {
-        mysqli_query($conn, "UPDATE tb_dokumen
+        return db_execute("UPDATE tb_dokumen
             SET status = 'menunggu',
                 rejection_reason = NULL,
                 approved_by = NULL,
                 approved_at = NULL
-            WHERE id_document = '$id_document'
-        ");
-
-        return mysqli_affected_rows($conn);
+            WHERE id_document = ?
+        ", 's', [$id_document]);
     }
 
     if ($status === 'ditolak') {
-        if ($reason === '') {
+        if ($reason === '' || $id_user === '') {
             return false;
         }
 
-        $reason_safe = db_escape($reason);
-
-        mysqli_query($conn, "UPDATE tb_dokumen
+        return db_execute("UPDATE tb_dokumen
             SET status = 'ditolak',
-                rejection_reason = '$reason_safe',
-                approved_by = $id_user_sql,
+                rejection_reason = ?,
+                approved_by = ?,
                 approved_at = NOW()
-            WHERE id_document = '$id_document'
-        ");
-
-        return mysqli_affected_rows($conn);
+            WHERE id_document = ?
+        ", 'sss', [$reason, $id_user, $id_document]);
     }
 
-    mysqli_query($conn, "UPDATE tb_dokumen
-        SET status = '$status',
-            rejection_reason = NULL,
-            approved_by = $id_user_sql,
-            approved_at = NOW()
-        WHERE id_document = '$id_document'
-    ");
+    if ($id_user === '') {
+        return false;
+    }
 
-    return mysqli_affected_rows($conn);
+    return db_execute("UPDATE tb_dokumen
+        SET status = ?,
+            rejection_reason = NULL,
+            approved_by = ?,
+            approved_at = NOW()
+        WHERE id_document = ?
+    ", 'sss', [$status, $id_user, $id_document]);
 }
 
 function reject_document($id_document, $reason = '')
 {
-    global $conn;
+    $id_document = clean_entity_id($id_document, 'DOC');
+    $id_user = current_user_id();
+    $reason = clean_input_text($reason, 1000);
 
-    $reason = trim((string) $reason);
-
-    if ($reason === '') {
+    if ($id_document === '' || $id_user === '' || $reason === '') {
         return false;
     }
 
-    $id_document = db_escape($id_document);
-    $id_user_sql = current_user_id_sql();
-    $reason_safe = db_escape($reason);
-
-    mysqli_query($conn, "UPDATE tb_dokumen
+    return db_execute("UPDATE tb_dokumen
         SET status = 'ditolak',
-            rejection_reason = '$reason_safe',
-            approved_by = $id_user_sql,
+            rejection_reason = ?,
+            approved_by = ?,
             approved_at = NOW()
-        WHERE id_document = '$id_document'
-    ");
-
-    return mysqli_affected_rows($conn);
+        WHERE id_document = ?
+    ", 'sss', [$reason, $id_user, $id_document]);
 }
 
 function delete_document($id_document)
 {
-    global $conn;
+    $id_document = clean_entity_id($id_document, 'DOC');
 
     $document = get_document($id_document);
 
@@ -316,11 +320,7 @@ function delete_document($id_document)
         return false;
     }
 
-    $id_document = db_escape($id_document);
-
-    mysqli_query($conn, "DELETE FROM tb_dokumen WHERE id_document = '$id_document'");
-
-    return mysqli_affected_rows($conn);
+    return db_execute("DELETE FROM tb_dokumen WHERE id_document = ?", 's', [$id_document]);
 }
 
 function document_stats()

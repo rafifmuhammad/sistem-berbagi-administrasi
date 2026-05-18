@@ -6,6 +6,7 @@ RewriteRule ^app/(assets|plugins|lime|documents)/(.*)$ $1/$2 [L,QSA]
 
 RewriteRule ^(?:app/)?$ index.php [L,QSA]
 RewriteRule ^(?:app/)?public/?$ index.php [L,QSA]
+RewriteRule ^(?:app/)?public/documents/([^/]+)/?$ views/documents/document_public_detail.php?id=$1 [L,QSA]
 RewriteRule ^(?:app/)?login/?$ login.php [L,QSA]
 RewriteRule ^(?:app/)?register/?$ register.php [L,QSA]
 RewriteRule ^(?:app/)?logout/?$ logout.php [L,QSA]

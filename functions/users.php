@@ -12,70 +12,68 @@ function next_user_id()
 
 function add_user($data)
 {
-    global $conn;
-
     $id_user = next_user_id();
-    $email = trim($data['email'] ?? '');
-    $nama = trim($data['nama'] ?? '');
-    $tanggal_lahir = trim($data['tanggal_lahir'] ?? '');
+    $email = clean_email($data['email'] ?? '');
+    $nama = clean_input_text($data['nama'] ?? '', 120);
+    $tanggal_lahir = clean_input_text($data['tanggal_lahir'] ?? '', 10);
     $password = (string) ($data['password'] ?? '');
     $role = in_array(($data['role'] ?? 'user'), ['admin', 'user'], true) ? $data['role'] : 'user';
 
-    if ($email === '' || $nama === '' || $password === '') {
+    if (!is_valid_entity_id($id_user, 'USR') || !is_valid_email($email) || $nama === '' || $password === '' || !is_valid_date_string($tanggal_lahir)) {
         return false;
     }
 
-    $email_safe = db_escape($email);
-
-    if (query("SELECT id_user FROM tb_user WHERE email = '$email_safe' LIMIT 1")) {
+    if (db_select("SELECT id_user FROM tb_user WHERE email = ? LIMIT 1", 's', [$email])) {
         return -1;
     }
 
-    $nama_safe = db_escape($nama);
-    $tanggal_safe = $tanggal_lahir !== '' ? "'" . db_escape($tanggal_lahir) . "'" : 'NULL';
-    $password_hash = db_escape(password_hash($password, PASSWORD_DEFAULT));
-    $role_safe = db_escape($role);
+    $tanggal_lahir = $tanggal_lahir !== '' ? $tanggal_lahir : null;
+    $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-    mysqli_query($conn, "INSERT INTO tb_user
+    return db_execute("INSERT INTO tb_user
         (id_user, email, nama, tanggal_lahir, password, role)
-        VALUES ('$id_user', '$email_safe', '$nama_safe', $tanggal_safe, '$password_hash', '$role_safe')
-    ");
-
-    return mysqli_affected_rows($conn);
+        VALUES (?, ?, ?, ?, ?, ?)
+    ", 'ssssss', [$id_user, $email, $nama, $tanggal_lahir, $password_hash, $role]);
 }
 
 function update_user($id_user, $data)
 {
-    global $conn;
-
-    $id_user = trim((string) $id_user);
-    $email = trim($data['email'] ?? '');
-    $nama = trim($data['nama'] ?? '');
-    $tanggal_lahir = trim($data['tanggal_lahir'] ?? '');
+    $id_user = clean_entity_id($id_user, 'USR');
+    $email = clean_email($data['email'] ?? '');
+    $nama = clean_input_text($data['nama'] ?? '', 120);
+    $tanggal_lahir = clean_input_text($data['tanggal_lahir'] ?? '', 10);
     $password = (string) ($data['password'] ?? '');
 
-    if ($id_user === '' || $email === '' || $nama === '') {
+    if ($id_user === '' || !is_valid_email($email) || $nama === '' || !is_valid_date_string($tanggal_lahir)) {
         return false;
     }
 
-    $id_safe = db_escape($id_user);
-    $email_safe = db_escape($email);
-    $nama_safe = db_escape($nama);
-    $tanggal_safe = $tanggal_lahir !== '' ? "'" . db_escape($tanggal_lahir) . "'" : 'NULL';
+    if (db_select("SELECT id_user FROM tb_user WHERE email = ? AND id_user <> ? LIMIT 1", 'ss', [$email, $id_user])) {
+        return false;
+    }
 
-    mysqli_query($conn, "UPDATE tb_user
-        SET email = '$email_safe',
-            nama = '$nama_safe',
-            tanggal_lahir = $tanggal_safe
-        WHERE id_user = '$id_safe'
-    ");
+    $tanggal_lahir = $tanggal_lahir !== '' ? $tanggal_lahir : null;
 
-    $affected = mysqli_affected_rows($conn);
+    $affected = db_execute("UPDATE tb_user
+        SET email = ?,
+            nama = ?,
+            tanggal_lahir = ?
+        WHERE id_user = ?
+    ", 'ssss', [$email, $nama, $tanggal_lahir, $id_user]);
+
+    if ($affected === false) {
+        return false;
+    }
 
     if ($password !== '') {
-        $password_hash = db_escape(password_hash($password, PASSWORD_DEFAULT));
-        mysqli_query($conn, "UPDATE tb_user SET password = '$password_hash' WHERE id_user = '$id_safe'");
-        $affected += mysqli_affected_rows($conn);
+        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+        $password_affected = db_execute("UPDATE tb_user SET password = ? WHERE id_user = ?", 'ss', [$password_hash, $id_user]);
+
+        if ($password_affected === false) {
+            return false;
+        }
+
+        $affected += $password_affected;
     }
 
     return $affected;
@@ -83,9 +81,7 @@ function update_user($id_user, $data)
 
 function delete_user($id_user)
 {
-    global $conn;
-
-    $id_user = trim((string) $id_user);
+    $id_user = clean_entity_id($id_user, 'USR');
 
     if ($id_user === '') {
         return false;
@@ -95,9 +91,5 @@ function delete_user($id_user)
         return -1;
     }
 
-    $id_safe = db_escape($id_user);
-
-    mysqli_query($conn, "DELETE FROM tb_user WHERE id_user = '$id_safe'");
-
-    return mysqli_affected_rows($conn);
+    return db_execute("DELETE FROM tb_user WHERE id_user = ?", 's', [$id_user]);
 }

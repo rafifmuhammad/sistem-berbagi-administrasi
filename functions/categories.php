@@ -32,8 +32,7 @@ function unique_category_code($name)
     $number = 1;
 
     while (true) {
-        $code_safe = db_escape($code);
-        $rows = query("SELECT id_category FROM tb_kategori WHERE kode_kategori = '$code_safe' LIMIT 1");
+        $rows = db_select("SELECT id_category FROM tb_kategori WHERE kode_kategori = ? LIMIT 1", 's', [$code]);
 
         if (empty($rows)) {
             return $code;
@@ -47,76 +46,62 @@ function unique_category_code($name)
 
 function add_category($data)
 {
-    global $conn;
-
     $id_category = next_category_id();
-    $nama = trim($data['nama_kategori'] ?? '');
+    $nama = clean_input_text($data['nama_kategori'] ?? '', 120);
 
-    if ($nama === '') {
+    if (!is_valid_entity_id($id_category, 'CAT') || $nama === '') {
         return false;
     }
 
-    $kode = db_escape(unique_category_code($nama));
-    $nama = db_escape($nama);
+    $kode = unique_category_code($nama);
 
-    mysqli_query($conn, "INSERT INTO tb_kategori (id_category, kode_kategori, nama_kategori)
-        VALUES ('$id_category', '$kode', '$nama')
-    ");
-
-    return mysqli_affected_rows($conn);
+    return db_execute("INSERT INTO tb_kategori (id_category, kode_kategori, nama_kategori)
+        VALUES (?, ?, ?)
+    ", 'sss', [$id_category, $kode, $nama]);
 }
 
 function update_category($id_category, $data)
 {
-    global $conn;
-
-    $id_category = trim((string) $id_category);
-    $nama = trim($data['nama_kategori'] ?? '');
+    $id_category = clean_entity_id($id_category, 'CAT');
+    $nama = clean_input_text($data['nama_kategori'] ?? '', 120);
 
     if ($id_category === '' || $nama === '') {
         return false;
     }
 
-    $id_safe = db_escape($id_category);
-    $nama = db_escape($nama);
-
-    mysqli_query($conn, "UPDATE tb_kategori
-        SET nama_kategori = '$nama'
-        WHERE id_category = '$id_safe'
-    ");
-
-    return mysqli_affected_rows($conn);
+    return db_execute("UPDATE tb_kategori
+        SET nama_kategori = ?
+        WHERE id_category = ?
+    ", 'ss', [$nama, $id_category]);
 }
 
 function delete_category($id_category)
 {
     global $conn;
 
-    $id_category = trim((string) $id_category);
+    $id_category = clean_entity_id($id_category, 'CAT');
 
     if ($id_category === '') {
         return false;
     }
 
-    $id_safe = db_escape($id_category);
-
     mysqli_begin_transaction($conn);
 
-    $documents_deleted = mysqli_query($conn, "DELETE FROM tb_dokumen WHERE id_category = '$id_safe'");
+    $documents_deleted = db_execute("DELETE FROM tb_dokumen WHERE id_category = ?", 's', [$id_category]);
 
-    if (!$documents_deleted) {
+    if ($documents_deleted === false) {
         mysqli_rollback($conn);
         return false;
     }
 
-    $category_deleted = mysqli_query($conn, "DELETE FROM tb_kategori WHERE id_category = '$id_safe'");
+    $category_deleted = db_execute("DELETE FROM tb_kategori WHERE id_category = ?", 's', [$id_category]);
 
-    if (!$category_deleted) {
+    if ($category_deleted === false) {
         mysqli_rollback($conn);
         return false;
     }
 
-    $affected = mysqli_affected_rows($conn);
+    $affected = $category_deleted;
     mysqli_commit($conn);
 
     return $affected;

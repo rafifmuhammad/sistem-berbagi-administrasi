@@ -22,10 +22,9 @@ if (is_logged_in() && !is_admin() && $document['status'] !== 'disetujui' && (str
     exit;
 }
 
-$base_dir = realpath(__DIR__ . '/..');
-$file_path = realpath(__DIR__ . '/../' . $document['file']);
+$file_path = document_storage_path($document['file'] ?? '', ['documents/files']);
 
-if (!$file_path || strpos($file_path, $base_dir) !== 0 || !is_file($file_path)) {
+if ($file_path === '') {
     http_response_code(404);
     echo 'File tidak ditemukan.';
     exit;
@@ -34,7 +33,7 @@ if (!$file_path || strpos($file_path, $base_dir) !== 0 || !is_file($file_path)) 
 $download_name = basename($file_path);
 
 header('Content-Type: application/octet-stream');
-header('Content-Disposition: attachment; filename="' . str_replace('"', '', $download_name) . '"');
+header('Content-Disposition: attachment; filename="' . str_replace(['"', "\r", "\n"], '', $download_name) . '"');
 header('Content-Length: ' . filesize($file_path));
 header('Cache-Control: no-store, no-cache, must-revalidate');
 readfile($file_path);

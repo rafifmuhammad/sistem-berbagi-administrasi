@@ -2,7 +2,14 @@
 
 function upload_dir($folder)
 {
-    return __DIR__ . '/../documents/' . trim($folder, '/\\') . '/';
+    $folder = trim((string) $folder, '/\\');
+    $allowed = ['files', 'previews'];
+
+    if (!in_array($folder, $allowed, true)) {
+        return '';
+    }
+
+    return __DIR__ . '/../documents/' . $folder . '/';
 }
 
 function set_document_file_error($message)
@@ -89,6 +96,11 @@ function ensure_upload_dir($folder)
     $folder = trim($folder, '/\\');
     $target_dir = upload_dir($folder);
 
+    if ($target_dir === '') {
+        set_document_file_error('Folder upload tidak valid.');
+        return '';
+    }
+
     if (!is_dir($target_dir) && !@mkdir($target_dir, 0775, true) && !is_dir($target_dir)) {
         set_document_file_error('Folder documents/' . $folder . ' tidak bisa dibuat di server.');
         return '';
@@ -110,9 +122,179 @@ function safe_file_name($file_name)
 {
     $file_name = str_replace(['/', '\\'], '_', $file_name);
     $file_name = preg_replace('/[\x00-\x1F\x7F]+/', '', $file_name);
+    $file_name = preg_replace('/[^A-Za-z0-9._-]+/', '-', $file_name);
     $file_name = preg_replace('/\s+/', '-', trim($file_name));
+    $file_name = trim($file_name, '.-_');
 
     return $file_name !== '' ? $file_name : uniqid('dokumen_', true);
+}
+
+function upload_max_bytes($fallback_mb = 25)
+{
+    $configured = getenv('APP_UPLOAD_MAX_BYTES');
+
+    if ($configured !== false && ctype_digit((string) $configured) && (int) $configured > 0) {
+        return (int) $configured;
+    }
+
+    return (int) $fallback_mb * 1024 * 1024;
+}
+
+function uploaded_file_is_single($file)
+{
+    if (empty($file) || !is_array($file)) {
+        return false;
+    }
+
+    foreach (['name', 'type', 'tmp_name', 'error', 'size'] as $key) {
+        if (isset($file[$key]) && is_array($file[$key])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function uploaded_file_signature_matches($tmp_name, $extension)
+{
+    $extension = strtolower((string) $extension);
+    $handle = @fopen($tmp_name, 'rb');
+
+    if (!$handle) {
+        return false;
+    }
+
+    $header = (string) fread($handle, 8);
+    fclose($handle);
+
+    if ($extension === 'pdf') {
+        return strncmp($header, '%PDF-', 5) === 0;
+    }
+
+    if ($extension === 'doc') {
+        return $header === "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1";
+    }
+
+    if ($extension === 'docx') {
+        if (class_exists('ZipArchive')) {
+            $zip = new ZipArchive();
+            $opened = $zip->open($tmp_name) === true;
+            $has_document = $opened && $zip->locateName('word/document.xml') !== false;
+
+            if ($opened) {
+                $zip->close();
+            }
+
+            return $has_document;
+        }
+
+        return strncmp($header, "PK\x03\x04", 4) === 0;
+    }
+
+    return false;
+}
+
+function validate_uploaded_document($file, $allowed_extensions, $label)
+{
+    if (!uploaded_file_is_single($file)) {
+        set_document_file_error($label . ' tidak valid.');
+        return '';
+    }
+
+    $error = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+
+    if ($error !== UPLOAD_ERR_OK) {
+        set_document_file_error(upload_error_message($error, $label));
+        return '';
+    }
+
+    $size = (int) ($file['size'] ?? 0);
+    $max_size = upload_max_bytes();
+
+    if ($size <= 0 || ($max_size > 0 && $size > $max_size)) {
+        set_document_file_error($label . ' harus berukuran 1 byte sampai ' . format_upload_bytes($max_size) . '.');
+        return '';
+    }
+
+    $original_name = clean_input_text($file['name'] ?? '', 180);
+    $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+
+    if (!in_array($extension, $allowed_extensions, true)) {
+        set_document_file_error($label . ' memiliki format yang tidak diizinkan.');
+        return '';
+    }
+
+    $tmp_name = $file['tmp_name'] ?? '';
+
+    if ($tmp_name === '' || !is_uploaded_file($tmp_name)) {
+        set_document_file_error($label . ' tidak valid sebagai file upload.');
+        return '';
+    }
+
+    if (!uploaded_file_signature_matches($tmp_name, $extension)) {
+        set_document_file_error($label . ' tidak sesuai dengan tipe file ' . strtoupper($extension) . '.');
+        return '';
+    }
+
+    return $extension;
+}
+
+function normalize_document_relative_path($path)
+{
+    $path = str_replace('\\', '/', clean_input_text($path, 255));
+
+    if ($path === '' || preg_match('/(^\/|^[A-Za-z]:|:\/\/)/', $path)) {
+        return '';
+    }
+
+    $parts = explode('/', $path);
+
+    foreach ($parts as $part) {
+        if ($part === '' || $part === '.' || $part === '..') {
+            return '';
+        }
+    }
+
+    return implode('/', $parts);
+}
+
+function document_storage_path($relative_path, $allowed_prefixes = ['documents/files', 'documents/previews'])
+{
+    $relative_path = normalize_document_relative_path($relative_path);
+
+    if ($relative_path === '') {
+        return '';
+    }
+
+    $allowed = false;
+
+    foreach ($allowed_prefixes as $prefix) {
+        $prefix = trim(str_replace('\\', '/', (string) $prefix), '/');
+
+        if ($relative_path === $prefix || strpos($relative_path, $prefix . '/') === 0) {
+            $allowed = true;
+            break;
+        }
+    }
+
+    if (!$allowed) {
+        return '';
+    }
+
+    $project_dir = realpath(__DIR__ . '/..');
+    $documents_dir = realpath(__DIR__ . '/../documents');
+
+    if (!$project_dir || !$documents_dir) {
+        return '';
+    }
+
+    $absolute_path = realpath($project_dir . '/' . $relative_path);
+
+    if (!$absolute_path || !is_file($absolute_path) || !path_is_inside($absolute_path, $documents_dir)) {
+        return '';
+    }
+
+    return $absolute_path;
 }
 
 function move_document_file($file, $document_id)
@@ -124,26 +306,16 @@ function move_document_file($file, $document_id)
         return '';
     }
 
-    $error = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+    $extension = validate_uploaded_document($file, ['pdf', 'doc', 'docx'], 'File dokumen');
 
-    if ($error !== UPLOAD_ERR_OK) {
-        set_document_file_error(upload_error_message($error, 'File dokumen'));
+    if ($extension === '') {
         return '';
     }
 
-    $original_name = $file['name'] ?? '';
-    $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
-    $allowed = ['pdf', 'doc', 'docx'];
+    $document_id = clean_entity_id($document_id, 'DOC');
 
-    if (!in_array($extension, $allowed, true)) {
-        set_document_file_error('Format file dokumen harus PDF, DOC, atau DOCX.');
-        return '';
-    }
-
-    $tmp_name = $file['tmp_name'] ?? '';
-
-    if ($tmp_name === '' || !is_uploaded_file($tmp_name)) {
-        set_document_file_error('File dokumen tidak valid sebagai file upload.');
+    if ($document_id === '') {
+        set_document_file_error('ID dokumen tidak valid.');
         return '';
     }
 
@@ -153,6 +325,8 @@ function move_document_file($file, $document_id)
         return '';
     }
 
+    $tmp_name = $file['tmp_name'];
+    $original_name = clean_input_text($file['name'] ?? '', 180);
     $base_name = pathinfo($original_name, PATHINFO_FILENAME);
     $file_name = safe_file_name($document_id . '_' . $base_name . '_' . time() . '.' . $extension);
     $target_path = $target_dir . $file_name;
@@ -169,12 +343,12 @@ function move_document_file($file, $document_id)
 
 function has_uploaded_file($file)
 {
-    return !empty($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK;
+    return uploaded_file_is_single($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK;
 }
 
 function uploaded_file_was_submitted($file)
 {
-    return !empty($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+    return uploaded_file_is_single($file) && ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
 }
 
 function move_preview_file($file, $document_id)
@@ -183,25 +357,16 @@ function move_preview_file($file, $document_id)
         return '';
     }
 
-    $error = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+    $extension = validate_uploaded_document($file, ['pdf'], 'File preview PDF');
 
-    if ($error !== UPLOAD_ERR_OK) {
-        set_document_file_error(upload_error_message($error, 'File preview PDF'));
+    if ($extension === '') {
         return '';
     }
 
-    $original_name = $file['name'] ?? '';
-    $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+    $document_id = clean_entity_id($document_id, 'DOC');
 
-    if ($extension !== 'pdf') {
-        set_document_file_error('File preview harus berformat PDF.');
-        return '';
-    }
-
-    $tmp_name = $file['tmp_name'] ?? '';
-
-    if ($tmp_name === '' || !is_uploaded_file($tmp_name)) {
-        set_document_file_error('File preview PDF tidak valid sebagai file upload.');
+    if ($document_id === '') {
+        set_document_file_error('ID dokumen tidak valid.');
         return '';
     }
 
@@ -211,6 +376,8 @@ function move_preview_file($file, $document_id)
         return '';
     }
 
+    $tmp_name = $file['tmp_name'];
+    $original_name = clean_input_text($file['name'] ?? '', 180);
     $base_name = pathinfo($original_name, PATHINFO_FILENAME);
     $file_name = safe_file_name($document_id . '_preview_' . $base_name . '_' . time() . '.pdf');
     $target_path = $target_dir . $file_name;
@@ -231,10 +398,16 @@ function make_preview_file($file_path)
         return '';
     }
 
-    $absolute_file = __DIR__ . '/../' . $file_path;
+    $file_path = normalize_document_relative_path($file_path);
+    $absolute_file = document_storage_path($file_path);
+
+    if ($absolute_file === '') {
+        return '';
+    }
+
     $extension = strtolower(pathinfo($absolute_file, PATHINFO_EXTENSION));
 
-    if ($extension === 'pdf' && is_file($absolute_file)) {
+    if ($extension === 'pdf') {
         return $file_path;
     }
 
@@ -274,8 +447,8 @@ function document_preview_path($document)
 
 function preview_file_belongs_to_document($preview_file, $document_id)
 {
-    $preview_file = trim((string) $preview_file);
-    $document_id = trim((string) $document_id);
+    $preview_file = normalize_document_relative_path($preview_file);
+    $document_id = clean_entity_id($document_id, 'DOC');
 
     if ($preview_file === '' || $document_id === '') {
         return false;

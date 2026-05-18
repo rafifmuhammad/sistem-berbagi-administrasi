@@ -10,7 +10,7 @@ $page_title = 'Dashboard - Outline';
 $stats = document_stats();
 $total_categories = query("SELECT COUNT(*) AS total FROM tb_kategori")[0]['total'] ?? 0;
 $total_users = query("SELECT COUNT(*) AS total FROM tb_user")[0]['total'] ?? 0;
-$recent_documents = array_slice(get_documents(false), 0, 8);
+$dashboard_documents = get_dashboard_documents(8);
 ?>
 <!doctype html>
 <html lang="id">
@@ -19,6 +19,7 @@ $recent_documents = array_slice(get_documents(false), 0, 8);
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title><?= h($page_title ?? 'Outline'); ?></title>
+    <?php render_favicon_links(); ?>
 
     <link
       href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900&display=swap"
@@ -192,7 +193,7 @@ $recent_documents = array_slice(get_documents(false), 0, 8);
             <div class="col-md-12">
               <div class="card">
                 <div class="card-body">
-                  <h5 class="card-title">Dokumen Terbaru</h5>
+                  <h5 class="card-title">Prioritas Persetujuan</h5>
                   <div class="table-responsive">
                     <table id="recentDocumentsTable" class="table">
                       <thead>
@@ -202,18 +203,35 @@ $recent_documents = array_slice(get_documents(false), 0, 8);
                           <th>Kategori</th>
                           <th class="text-center">Tanggal</th>
                           <th class="text-center">Status</th>
+                          <th class="text-center no-sort">Aksi</th>
                           <th class="text-center">Lihat</th>
                           <th class="text-center">Unduh</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <?php foreach ($recent_documents as $document) : ?>
-                        <tr>
+                        <?php foreach ($dashboard_documents as $document) : ?>
+                        <tr class="<?= $document['status'] === 'menunggu' ? 'dashboard-priority-row' : ''; ?>">
                           <td class="text-center"><?= h($document['id_document']); ?></td>
                           <td><?= h($document['nama_dokumen']); ?></td>
                           <td><?= h($document['nama_kategori']); ?></td>
                           <td class="text-center"><?= h($document['tanggal_upload']); ?></td>
                           <td class="text-center"><?= document_status_badge($document['status']); ?></td>
+                          <td class="text-center">
+                            <?php if ($document['status'] === 'menunggu') : ?>
+                            <a
+                              href="#"
+                              class="btn btn-outline-success btn-sm js-confirm"
+                              data-href="<?= h(app_url('views/documents/document_action.php?action=approve&id=' . rawurlencode($document['id_document']) . '&return_to=views/dashboard/dashboard.php')); ?>"
+                              data-title="Setujui dokumen?"
+                              data-text="Dokumen akan tampil di halaman publik."
+                              data-icon="info"
+                            >
+                              <i class="material-icons">check_circle</i> Setujui
+                            </a>
+                            <?php else : ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
+                          </td>
                           <td class="text-center">
                             <a href="<?= h(app_url(document_preview_url($document))); ?>" class="btn btn-outline-info btn-sm preview-btn" data-file="<?= h(app_url(document_preview_url($document))); ?>">
                               <i class="material-icons">visibility</i> Lihat

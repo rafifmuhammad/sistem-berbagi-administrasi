@@ -87,8 +87,9 @@
         }
 
         var isDocumentsTable = selector === "#documentsTable";
+        var isRecentDocumentsTable = selector === "#recentDocumentsTable";
 
-        return $(selector).DataTable({
+        var tableOptions = {
             responsive: !isDocumentsTable,
             pageLength: 10,
             lengthMenu: [[5, 10, 25, 50, -1], ["5", "10", "25", "50", "Semua"]],
@@ -101,7 +102,13 @@
             dom: "<'row align-items-center m-b-sm'<'col-md-6'l><'col-md-6'f>>" +
                  "<'row'<'col-12'tr>>" +
                  "<'row align-items-center m-t-sm'<'col-md-5'i><'col-md-7'p>>"
-        });
+        };
+
+        if (isRecentDocumentsTable) {
+            tableOptions.order = [];
+        }
+
+        return $(selector).DataTable(tableOptions);
     }
 
     function confirmAction(options) {

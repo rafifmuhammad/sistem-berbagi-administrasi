@@ -13,6 +13,7 @@ $categories = get_categories();
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title><?= h($page_title ?? 'Outline'); ?></title>
+    <?php render_favicon_links(); ?>
 
     <link
       href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900&display=swap"
@@ -142,6 +143,7 @@ $categories = get_categories();
                           <th class="text-center">ID</th>
                           <th>Nama Dokumen</th>
                           <th>Kategori Dokumen</th>
+                          <th class="text-center">Detail</th>
                           <th class="text-center">Lihat</th>
                           <th class="text-center">Unduh</th>
                         </tr>
@@ -152,6 +154,11 @@ $categories = get_categories();
                           <td class="text-center"><?= h($document['id_document']); ?></td>
                           <td><?= h($document['nama_dokumen']); ?></td>
                           <td><?= h($document['nama_kategori']); ?></td>
+                          <td class="text-center">
+                            <a href="<?= h(app_url('views/documents/document_public_detail.php?id=' . rawurlencode($document['id_document']))); ?>" class="btn btn-outline-success btn-sm js-link-loading">
+                              <i class="material-icons">article</i> Detail
+                            </a>
+                          </td>
                           <td class="text-center">
                             <a href="<?= h(app_url(document_preview_url($document))); ?>" class="btn btn-outline-info btn-sm preview-btn" data-file="<?= h(app_url(document_preview_url($document))); ?>">
                               <i class="material-icons">visibility</i> Lihat

@@ -22,12 +22,11 @@ if (is_logged_in() && !is_admin() && $document['status'] !== 'disetujui' && (str
     exit;
 }
 
-$base_dir = realpath(__DIR__ . '/..');
 $preview_path = document_preview_path($document);
 $relative_file = $preview_path !== '' ? $preview_path : $document['file'];
-$absolute_file = realpath(__DIR__ . '/../' . $relative_file);
+$absolute_file = document_storage_path($relative_file);
 
-if (!$absolute_file || strpos($absolute_file, $base_dir) !== 0 || !is_file($absolute_file)) {
+if ($absolute_file === '') {
     http_response_code(404);
     echo 'File tidak ditemukan.';
     exit;
@@ -42,7 +41,7 @@ header('X-Content-Type-Options: nosniff');
 
 if ($extension === 'pdf') {
     header('Content-Type: application/pdf');
-    header('Content-Disposition: inline; filename="' . str_replace('"', '', basename($absolute_file)) . '"');
+    header('Content-Disposition: inline; filename="' . str_replace(['"', "\r", "\n"], '', basename($absolute_file)) . '"');
     header('Content-Length: ' . filesize($absolute_file));
     header('Cache-Control: private, max-age=3600');
     readfile($absolute_file);
@@ -67,6 +66,7 @@ header('Content-Type: text/html; charset=utf-8');
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Preview <?= h($document['nama_dokumen']); ?></title>
+    <?php render_favicon_links(); ?>
     <style>
       body {
         background: #f6f8fb;

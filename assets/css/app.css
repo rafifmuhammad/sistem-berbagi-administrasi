@@ -115,6 +115,14 @@ body {
     border-top: 0 !important;
 }
 
+.dashboard-priority-row td {
+    background: #fffaf0;
+}
+
+.dashboard-priority-row td:first-child {
+    border-left: 3px solid #f0ad4e;
+}
+
 .table th,
 .table td {
     vertical-align: middle;

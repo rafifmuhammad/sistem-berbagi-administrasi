@@ -34,8 +34,13 @@ function require_admin()
 
 function login_user($email, $password)
 {
-    $email = db_escape($email);
-    $users = query("SELECT * FROM tb_user WHERE email = '$email' LIMIT 1");
+    $email = clean_email($email);
+
+    if (!is_valid_email($email)) {
+        return false;
+    }
+
+    $users = db_select("SELECT * FROM tb_user WHERE email = ? LIMIT 1", 's', [$email]);
 
     if (!$users || !password_verify($password, $users[0]['password'])) {
         return false;
@@ -54,32 +59,25 @@ function login_user($email, $password)
 
 function register_user($data)
 {
-    global $conn;
-
     $id_user = make_entity_id('USR');
-    $email = trim($data['email'] ?? '');
-    $nama = trim($data['nama'] ?? '');
-    $tanggal_lahir = trim($data['tanggal_lahir'] ?? '');
+    $email = clean_email($data['email'] ?? '');
+    $nama = clean_input_text($data['nama'] ?? '', 120);
+    $tanggal_lahir = clean_input_text($data['tanggal_lahir'] ?? '', 10);
     $password = (string) ($data['password'] ?? '');
 
-    if ($email === '' || $nama === '' || $password === '') {
+    if (!is_valid_entity_id($id_user, 'USR') || !is_valid_email($email) || $nama === '' || $password === '' || !is_valid_date_string($tanggal_lahir)) {
         return false;
     }
 
-    $email_safe = db_escape($email);
-
-    if (query("SELECT id_user FROM tb_user WHERE email = '$email_safe' LIMIT 1")) {
+    if (db_select("SELECT id_user FROM tb_user WHERE email = ? LIMIT 1", 's', [$email])) {
         return -1;
     }
 
-    $nama_safe = db_escape($nama);
-    $tanggal_safe = $tanggal_lahir !== '' ? "'" . db_escape($tanggal_lahir) . "'" : 'NULL';
-    $password_hash = db_escape(password_hash($password, PASSWORD_DEFAULT));
+    $tanggal_lahir = $tanggal_lahir !== '' ? $tanggal_lahir : null;
+    $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
-    mysqli_query($conn, "INSERT INTO tb_user
+    return db_execute("INSERT INTO tb_user
         (id_user, email, nama, tanggal_lahir, password, role)
-        VALUES ('$id_user', '$email_safe', '$nama_safe', $tanggal_safe, '$password_hash', 'user')
-    ");
-
-    return mysqli_affected_rows($conn);
+        VALUES (?, ?, ?, ?, ?, 'user')
+    ", 'sssss', [$id_user, $email, $nama, $tanggal_lahir, $password_hash]);
 }

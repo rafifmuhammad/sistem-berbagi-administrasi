@@ -87,6 +87,9 @@ if (!function_exists('app_clean_path')) {
             $clean_path = 'logout/';
         } elseif ($path === 'views/dashboard/dashboard.php') {
             $clean_path = 'dashboard/';
+        } elseif ($path === 'views/documents/document_public_detail.php' && !empty($params['id'])) {
+            $clean_path = 'public/documents/' . rawurlencode((string) $params['id']) . '/';
+            unset($params['id']);
         } elseif ($path === 'views/documents/document_management.php') {
             $clean_path = clean_resource_route('documents', $params);
         } elseif ($path === 'views/documents/document_add.php') {
@@ -164,6 +167,131 @@ if (!function_exists('h')) {
     function h($value)
     {
         return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+    }
+}
+
+if (!function_exists('clean_input_text')) {
+    function clean_input_text($value, $max_length = 255)
+    {
+        $value = trim((string) $value);
+        $value = str_replace("\0", '', $value);
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+/', '', $value);
+
+        if ($max_length > 0 && strlen($value) > $max_length) {
+            $value = substr($value, 0, $max_length);
+        }
+
+        return $value;
+    }
+}
+
+if (!function_exists('clean_email')) {
+    function clean_email($value)
+    {
+        return strtolower(clean_input_text($value, 254));
+    }
+}
+
+if (!function_exists('is_valid_email')) {
+    function is_valid_email($value)
+    {
+        return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
+    }
+}
+
+if (!function_exists('is_valid_entity_id')) {
+    function is_valid_entity_id($value, $prefix = '')
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return false;
+        }
+
+        $prefix = strtoupper(trim((string) $prefix));
+
+        if ($prefix === 'USR' && preg_match('/^[0-9]{1,20}$/', $value) === 1) {
+            return true;
+        }
+
+        $pattern = $prefix !== ''
+            ? '/^' . preg_quote($prefix, '/') . '-[A-Z0-9]{8,64}$/'
+            : '/^[A-Z]{2,10}-[A-Z0-9]{8,64}$/';
+
+        return preg_match($pattern, strtoupper($value)) === 1;
+    }
+}
+
+if (!function_exists('clean_entity_id')) {
+    function clean_entity_id($value, $prefix = '')
+    {
+        $value = strtoupper(clean_input_text($value, 80));
+
+        return is_valid_entity_id($value, $prefix) ? $value : '';
+    }
+}
+
+if (!function_exists('is_valid_date_string')) {
+    function is_valid_date_string($value)
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return true;
+        }
+
+        $date = DateTime::createFromFormat('!Y-m-d', $value);
+
+        return $date && $date->format('Y-m-d') === $value;
+    }
+}
+
+if (!function_exists('path_is_inside')) {
+    function path_is_inside($path, $base)
+    {
+        $path = realpath($path);
+        $base = realpath($base);
+
+        if (!$path || !$base) {
+            return false;
+        }
+
+        $path = rtrim(str_replace('\\', '/', $path), '/');
+        $base = rtrim(str_replace('\\', '/', $base), '/');
+
+        return $path === $base || strpos($path, $base . '/') === 0;
+    }
+}
+
+if (!function_exists('render_favicon_links')) {
+    function render_favicon_links()
+    {
+        $version = '1.0';
+        $links = [
+            ['rel' => 'icon', 'type' => 'image/png', 'sizes' => '32x32', 'href' => 'assets/img/favicon/favicon-32x32.png'],
+            ['rel' => 'icon', 'type' => 'image/png', 'sizes' => '16x16', 'href' => 'assets/img/favicon/favicon-16x16.png'],
+            ['rel' => 'shortcut icon', 'href' => 'favicon.ico'],
+            ['rel' => 'apple-touch-icon', 'sizes' => '180x180', 'href' => 'assets/img/favicon/apple-touch-icon.png'],
+        ];
+
+        foreach ($links as $link) {
+            $attributes = [
+                'rel="' . h($link['rel']) . '"',
+                'href="' . h(app_url($link['href'])) . '?v=' . h($version) . '"',
+            ];
+
+            if (!empty($link['type'])) {
+                $attributes[] = 'type="' . h($link['type']) . '"';
+            }
+
+            if (!empty($link['sizes'])) {
+                $attributes[] = 'sizes="' . h($link['sizes']) . '"';
+            }
+
+            echo '    <link ' . implode(' ', $attributes) . ' />' . PHP_EOL;
+        }
+
+        echo '    <meta name="theme-color" content="#005878" />' . PHP_EOL;
     }
 }
 
