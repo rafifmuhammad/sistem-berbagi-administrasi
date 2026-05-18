@@ -124,9 +124,6 @@ $page_title = 'Detail Dokumen - Outline';
                       <a href="<?= h(app_url('index.php')); ?>" class="btn btn-outline-secondary btn-sm js-link-loading">
                         <i class="material-icons">arrow_back</i> Kembali
                       </a>
-                      <a href="<?= h(app_url(document_preview_url($document))); ?>" class="btn btn-outline-info btn-sm preview-btn" data-file="<?= h(app_url(document_preview_url($document))); ?>">
-                        <i class="material-icons">visibility</i> Lihat
-                      </a>
                       <a href="<?= h(app_url('files/download.php?id=' . rawurlencode($document['id_document']))); ?>" class="btn btn-outline-primary btn-sm">
                         <i class="material-icons">download</i> Unduh
                       </a>
