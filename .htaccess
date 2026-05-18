@@ -2,7 +2,7 @@ RewriteEngine On
 # Clean URL aplikasi. Jika server deploy gagal membuka route ini,
 # pastikan mod_rewrite aktif dan AllowOverride mengizinkan .htaccess.
 
-RewriteRule ^app/(assets|plugins|lime|documents)/(.*)$ $1/$2 [L,QSA]
+RewriteRule ^app/(assets|plugins|lime)/(.*)$ $1/$2 [L,QSA]
 
 RewriteRule ^(?:app/)?$ index.php [L,QSA]
 RewriteRule ^(?:app/)?public/?$ index.php [L,QSA]
@@ -12,14 +12,14 @@ RewriteRule ^(?:app/)?register/?$ register.php [L,QSA]
 RewriteRule ^(?:app/)?logout/?$ logout.php [L,QSA]
 RewriteRule ^(?:app/)?dashboard/?$ views/dashboard/dashboard.php [L,QSA]
 
-RewriteRule ^(?:app/)?documents/?$ views/documents/document_management.php [L,QSA]
-RewriteRule ^(?:app/)?documents/action/?$ views/documents/document_action.php [L,QSA]
-RewriteRule ^(?:app/)?documents/add/?$ views/documents/document_add.php [L,QSA]
-RewriteRule ^(?:app/)?documents/([^/]+)/edit/?$ views/documents/document_edit.php?id=$1 [L,QSA]
-RewriteRule ^(?:app/)?documents/([^/]+)/approve/?$ views/documents/document_action.php?action=approve&id=$1 [L,QSA]
-RewriteRule ^(?:app/)?documents/([^/]+)/reject/?$ views/documents/document_action.php?action=reject&id=$1 [L,QSA]
-RewriteRule ^(?:app/)?documents/([^/]+)/delete/?$ views/documents/document_action.php?action=delete&id=$1 [L,QSA]
-RewriteRule ^(?:app/)?documents/([^/]+)/?$ views/documents/document_detail.php?id=$1 [L,QSA]
+RewriteRule ^(?:app/)?admin/documents/?$ views/documents/document_management.php [L,QSA]
+RewriteRule ^(?:app/)?admin/documents/action/?$ views/documents/document_action.php [L,QSA]
+RewriteRule ^(?:app/)?admin/documents/add/?$ views/documents/document_add.php [L,QSA]
+RewriteRule ^(?:app/)?admin/documents/([^/]+)/edit/?$ views/documents/document_edit.php?id=$1 [L,QSA]
+RewriteRule ^(?:app/)?admin/documents/([^/]+)/approve/?$ views/documents/document_action.php?action=approve&id=$1 [L,QSA]
+RewriteRule ^(?:app/)?admin/documents/([^/]+)/reject/?$ views/documents/document_action.php?action=reject&id=$1 [L,QSA]
+RewriteRule ^(?:app/)?admin/documents/([^/]+)/delete/?$ views/documents/document_action.php?action=delete&id=$1 [L,QSA]
+RewriteRule ^(?:app/)?admin/documents/([^/]+)/?$ views/documents/document_detail.php?id=$1 [L,QSA]
 
 RewriteRule ^(?:app/)?categories/?$ views/categories/category_management.php [L,QSA]
 RewriteRule ^(?:app/)?categories/([^/]+)/delete/?$ views/categories/category_management.php?action=delete&id=$1 [L,QSA]

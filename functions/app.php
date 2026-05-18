@@ -91,14 +91,14 @@ if (!function_exists('app_clean_path')) {
             $clean_path = 'public/documents/' . rawurlencode((string) $params['id']) . '/';
             unset($params['id']);
         } elseif ($path === 'views/documents/document_management.php') {
-            $clean_path = clean_resource_route('documents', $params);
+            $clean_path = clean_resource_route('admin/documents', $params);
         } elseif ($path === 'views/documents/document_add.php') {
-            $clean_path = 'documents/add/';
+            $clean_path = 'admin/documents/add/';
         } elseif ($path === 'views/documents/document_edit.php' && !empty($params['id'])) {
-            $clean_path = 'documents/' . rawurlencode((string) $params['id']) . '/edit/';
+            $clean_path = 'admin/documents/' . rawurlencode((string) $params['id']) . '/edit/';
             unset($params['id']);
         } elseif ($path === 'views/documents/document_detail.php' && !empty($params['id'])) {
-            $clean_path = 'documents/' . rawurlencode((string) $params['id']) . '/';
+            $clean_path = 'admin/documents/' . rawurlencode((string) $params['id']) . '/';
             unset($params['id']);
         } elseif ($path === 'views/documents/document_action.php') {
             $clean_path = clean_document_action_route($params);
@@ -148,10 +148,10 @@ if (!function_exists('clean_document_action_route')) {
         if ($id !== '' && in_array($action, $clean_actions, true)) {
             unset($params['action'], $params['id']);
 
-            return 'documents/' . rawurlencode($id) . '/' . $action . '/';
+            return 'admin/documents/' . rawurlencode($id) . '/' . $action . '/';
         }
 
-        return 'documents/action/';
+        return 'admin/documents/action/';
     }
 }
 
