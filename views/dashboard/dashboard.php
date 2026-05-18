@@ -60,6 +60,11 @@ $dashboard_documents = get_dashboard_documents(8);
               <i class="material-icons">dashboard</i>Dashboard
             </a>
           </li>
+          <li>
+            <a href="<?= h(app_url('views/visits/visit_management.php')); ?>" class="<?= ($active_menu ?? '') === 'visits' ? 'active' : ''; ?>">
+              <i class="material-icons">insights</i>Kunjungan
+            </a>
+          </li>
           <li class="sidebar-title">Pengurusan Dokumen</li>
           <li>
             <a href="<?= h(app_url('views/documents/document_management.php')); ?>" class="<?= ($active_menu ?? '') === 'documents' ? 'active' : ''; ?>">
@@ -204,6 +209,7 @@ $dashboard_documents = get_dashboard_documents(8);
                           <th class="text-center">Tanggal</th>
                           <th class="text-center">Status</th>
                           <th class="text-center no-sort">Aksi</th>
+                          <th class="text-center">Link</th>
                           <th class="text-center">Lihat</th>
                           <th class="text-center">Unduh</th>
                         </tr>
@@ -233,14 +239,31 @@ $dashboard_documents = get_dashboard_documents(8);
                             <?php endif; ?>
                           </td>
                           <td class="text-center">
+                            <?php if (document_has_link($document)) : ?>
+                            <a href="<?= h(document_link_url($document)); ?>" class="btn btn-outline-success btn-sm" target="_blank" rel="noopener noreferrer">
+                              <i class="material-icons">link</i> Link
+                            </a>
+                            <?php else : ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
+                          </td>
+                          <td class="text-center">
+                            <?php if (document_file_available($document)) : ?>
                             <a href="<?= h(app_url(document_preview_url($document))); ?>" class="btn btn-outline-info btn-sm preview-btn" data-file="<?= h(app_url(document_preview_url($document))); ?>">
                               <i class="material-icons">visibility</i> Lihat
                             </a>
+                            <?php else : ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
                           </td>
                           <td class="text-center">
+                            <?php if (document_file_available($document)) : ?>
                             <a href="<?= h(app_url('files/download.php?id=' . rawurlencode($document['id_document']))); ?>" class="btn btn-outline-primary btn-sm">
                               <i class="material-icons">download</i> Unduh
                             </a>
+                            <?php else : ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
                           </td>
                         </tr>
                         <?php endforeach; ?>

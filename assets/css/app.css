@@ -183,15 +183,15 @@ body {
 }
 
 #documentsTable .documents-col-id {
-    width: 12%;
+    width: 11%;
 }
 
 #documentsTable .documents-col-name {
-    width: 18%;
+    width: 17%;
 }
 
 #documentsTable .documents-col-category {
-    width: 12%;
+    width: 11%;
 }
 
 #documentsTable .documents-col-date {
@@ -199,11 +199,15 @@ body {
 }
 
 #documentsTable .documents-col-status {
-    width: 12%;
+    width: 11%;
+}
+
+#documentsTable .documents-col-link {
+    width: 6%;
 }
 
 #documentsTable .documents-col-file {
-    width: 16%;
+    width: 15%;
 }
 
 #documentsTable .documents-col-icon {
@@ -424,6 +428,11 @@ body {
     border-radius: 4px;
     height: 620px;
     width: 100%;
+}
+
+.visit-url-cell {
+    max-width: 320px;
+    overflow-wrap: anywhere;
 }
 
 @media (max-width: 991.98px) {

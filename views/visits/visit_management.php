@@ -2,17 +2,13 @@
 require_once __DIR__ . '/../../functions/function.php';
 require_admin();
 
-$id = $_GET['id'] ?? '';
-$document = get_document($id);
-
-if (!$document) {
-    set_flash('error', 'Gagal', 'Dokumen tidak ditemukan.');
-    redirect_to('views/documents/document_management.php');
-}
-
-$active_menu = 'documents';
-$page_title = 'Detail Dokumen - Outline';
-$search_placeholder = 'Cari dokumen...';
+$active_menu = 'visits';
+$use_datatables = true;
+$table_search_id = 'visitsTable';
+$search_placeholder = 'Cari kunjungan...';
+$page_title = 'Kunjungan - Outline';
+$stats = visit_stats();
+$visits = get_visits();
 ?>
 <!doctype html>
 <html lang="id">
@@ -117,12 +113,10 @@ $search_placeholder = 'Cari dokumen...';
           <form class="form-inline my-2 my-lg-0 search" action="#">
             <input
               class="form-control mr-sm-2"
-              <?php if (!empty($table_search_id)) : ?>
               data-table-search="<?= h($table_search_id); ?>"
-              <?php endif; ?>
               type="search"
-              placeholder="<?= h($search_placeholder ?? 'Cari data...'); ?>"
-              aria-label="<?= h($search_placeholder ?? 'Cari data...'); ?>"
+              placeholder="<?= h($search_placeholder); ?>"
+              aria-label="<?= h($search_placeholder); ?>"
             />
           </form>
         </div>
@@ -138,11 +132,49 @@ $search_placeholder = 'Cari dokumen...';
                 <nav aria-label="breadcrumb">
                   <ol class="breadcrumb breadcrumb-separator-1">
                     <li class="breadcrumb-item"><a href="<?= h(app_url('views/dashboard/dashboard.php')); ?>">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="<?= h(app_url('views/documents/document_management.php')); ?>">Dokumen</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Detail</li>
+                    <li class="breadcrumb-item active" aria-current="page">Kunjungan</li>
                   </ol>
                 </nav>
-                <h3>Detail Dokumen</h3>
+                <h3>Kunjungan</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 col-xl-3">
+              <div class="card stat-card">
+                <div class="card-body">
+                  <h5 class="card-title">Total</h5>
+                  <h2 class="float-right"><?= (int) $stats['total']; ?></h2>
+                  <p>Pengunjung unik tercatat</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+              <div class="card stat-card">
+                <div class="card-body">
+                  <h5 class="card-title">Hari Ini</h5>
+                  <h2 class="float-right"><?= (int) $stats['today']; ?></h2>
+                  <p>Pengunjung unik hari ini</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+              <div class="card stat-card">
+                <div class="card-body">
+                  <h5 class="card-title">Sesi</h5>
+                  <h2 class="float-right"><?= (int) $stats['unique_sessions']; ?></h2>
+                  <p>Sesi pengunjung</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 col-xl-3">
+              <div class="card stat-card">
+                <div class="card-body">
+                  <h5 class="card-title">Mobile</h5>
+                  <h2 class="float-right"><?= (int) $stats['mobile']; ?></h2>
+                  <p>Pengunjung mobile dan tablet</p>
+                </div>
               </div>
             </div>
           </div>
@@ -151,68 +183,37 @@ $search_placeholder = 'Cari dokumen...';
             <div class="col-md-12">
               <div class="card">
                 <div class="card-body">
-                  <h5 class="card-title"><?= h($document['nama_dokumen']); ?></h5>
-                  <div class="document-identity">
-                    <div class="row">
-                      <div class="col-md-4">
-                        <p><span>ID Dokumen</span><?= h($document['id_document']); ?></p>
-                      </div>
-                      <div class="col-md-4">
-                        <p><span>Kategori</span><?= h($document['nama_kategori']); ?></p>
-                      </div>
-                      <div class="col-md-4">
-                        <p><span>Status</span><?= document_status_badge($document['status']); ?></p>
-                      </div>
-                      <div class="col-md-4">
-                        <p><span>Tanggal Upload</span><?= h($document['tanggal_upload']); ?></p>
-                      </div>
-                      <div class="col-md-4">
-                        <p><span>Diunggah Oleh</span><?= h($document['uploader'] ?: '-'); ?></p>
-                      </div>
-                      <div class="col-md-4">
-                        <p><span>Disetujui Oleh</span><?= h($document['approver'] ?: '-'); ?></p>
-                      </div>
-                      <div class="col-md-12">
-                        <p><span>Keterangan</span><?= h($document['keterangan'] ?: '-'); ?></p>
-                      </div>
-                      <div class="col-md-12">
-                        <p>
-                          <span>Link</span>
-                          <?php if (document_has_link($document)) : ?>
-                          <a href="<?= h(document_link_url($document)); ?>" target="_blank" rel="noopener noreferrer"><?= h(document_link_url($document)); ?></a>
-                          <?php else : ?>
-                          -
-                          <?php endif; ?>
-                        </p>
-                      </div>
-                    </div>
-                    <div class="button-list">
-                      <?php if (document_file_available($document)) : ?>
-                      <a href="<?= h(app_url('files/download.php?id=' . rawurlencode($document['id_document']))); ?>" class="btn btn-outline-primary btn-sm">
-                        <i class="material-icons">download</i> Unduh
-                      </a>
-                      <?php endif; ?>
-                      <?php if (document_has_link($document)) : ?>
-                      <a href="<?= h(document_link_url($document)); ?>" class="btn btn-outline-success btn-sm" target="_blank" rel="noopener noreferrer">
-                        <i class="material-icons">link</i> Link
-                      </a>
-                      <?php endif; ?>
-                      <a href="<?= h(app_url('views/documents/document_edit.php?id=' . rawurlencode($document['id_document']))); ?>" class="btn btn-outline-warning btn-sm js-link-loading">
-                        <i class="material-icons">edit</i> Ubah
-                      </a>
-                    </div>
+                  <h5 class="card-title">Riwayat Pengunjung Unik</h5>
+                  <div class="table-responsive">
+                    <table id="visitsTable" class="table">
+                      <thead>
+                        <tr>
+                          <th>Terakhir Dikunjungi</th>
+                          <th>Halaman Terakhir</th>
+                          <th>Pengguna</th>
+                          <th>IP</th>
+                          <th>OS</th>
+                          <th>Browser</th>
+                          <th>Perangkat</th>
+                          <th>Referrer</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <?php foreach ($visits as $visit) : ?>
+                        <tr>
+                          <td><?= h($visit['visited_at']); ?></td>
+                          <td class="visit-url-cell"><?= h($visit['page_url'] ?: '-'); ?></td>
+                          <td><?= h($visit['user_name'] ?: 'Publik'); ?></td>
+                          <td><?= h($visit['ip_address'] ?: '-'); ?></td>
+                          <td><?= h($visit['operating_system'] ?: '-'); ?></td>
+                          <td><?= h($visit['browser'] ?: '-'); ?></td>
+                          <td><?= h($visit['device_type'] ?: '-'); ?></td>
+                          <td class="visit-url-cell"><?= h($visit['referrer'] ?: '-'); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                      </tbody>
+                    </table>
                   </div>
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="card-body">
-                  <h5 class="card-title">Preview Dokumen</h5>
-                  <?php if (document_file_available($document)) : ?>
-                  <iframe class="document-viewer" src="<?= h(app_url(document_preview_url($document))); ?>"></iframe>
-                  <?php else : ?>
-                  <p class="text-muted mb-0">Preview tidak tersedia karena dokumen ini hanya berisi link.</p>
-                  <?php endif; ?>
                 </div>
               </div>
             </div>

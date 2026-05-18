@@ -74,6 +74,11 @@ $categories = get_categories();
               <i class="material-icons">dashboard</i>Dashboard
             </a>
           </li>
+          <li>
+            <a href="<?= h(app_url('views/visits/visit_management.php')); ?>" class="<?= ($active_menu ?? '') === 'visits' ? 'active' : ''; ?>">
+              <i class="material-icons">insights</i>Kunjungan
+            </a>
+          </li>
           <?php endif; ?>
           <li class="sidebar-title">Pengurusan Dokumen</li>
           <li>
@@ -182,7 +187,12 @@ $categories = get_categories();
                     </div>
                     <div class="form-group">
                       <label for="documentFile">File Dokumen</label>
-                      <input type="file" class="form-control" id="documentFile" name="file" accept=".pdf,.doc,.docx" required />
+                      <input type="file" class="form-control" id="documentFile" name="file" accept=".pdf,.doc,.docx" />
+                      <small class="form-text text-muted">Isi file dokumen, link dokumen, atau keduanya.</small>
+                    </div>
+                    <div class="form-group">
+                      <label for="documentLink">Link Dokumen</label>
+                      <input type="url" class="form-control" id="documentLink" name="link" placeholder="https://contoh.ac.id/dokumen" />
                     </div>
                     <div class="form-group">
                       <label for="documentPreviewFile">File Preview PDF</label>

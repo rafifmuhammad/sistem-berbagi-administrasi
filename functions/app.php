@@ -87,6 +87,8 @@ if (!function_exists('app_clean_path')) {
             $clean_path = 'logout/';
         } elseif ($path === 'views/dashboard/dashboard.php') {
             $clean_path = 'dashboard/';
+        } elseif ($path === 'views/visits/visit_management.php') {
+            $clean_path = 'dashboard/visits/';
         } elseif ($path === 'views/documents/document_public_detail.php' && !empty($params['id'])) {
             $clean_path = 'public/documents/' . rawurlencode((string) $params['id']) . '/';
             unset($params['id']);
@@ -243,6 +245,25 @@ if (!function_exists('is_valid_date_string')) {
         $date = DateTime::createFromFormat('!Y-m-d', $value);
 
         return $date && $date->format('Y-m-d') === $value;
+    }
+}
+
+if (!function_exists('clean_http_url')) {
+    function clean_http_url($value, $max_length = 2048)
+    {
+        $value = clean_input_text($value, $max_length);
+
+        if ($value === '') {
+            return '';
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_URL) === false) {
+            return '';
+        }
+
+        $scheme = strtolower((string) parse_url($value, PHP_URL_SCHEME));
+
+        return in_array($scheme, ['http', 'https'], true) ? $value : '';
     }
 }
 

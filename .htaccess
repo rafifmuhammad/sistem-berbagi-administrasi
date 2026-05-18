@@ -11,6 +11,7 @@ RewriteRule ^(?:app/)?login/?$ login.php [L,QSA]
 RewriteRule ^(?:app/)?register/?$ register.php [L,QSA]
 RewriteRule ^(?:app/)?logout/?$ logout.php [L,QSA]
 RewriteRule ^(?:app/)?dashboard/?$ views/dashboard/dashboard.php [L,QSA]
+RewriteRule ^(?:app/)?dashboard/visits/?$ views/visits/visit_management.php [L,QSA]
 
 RewriteRule ^(?:app/)?admin/documents/?$ views/documents/document_management.php [L,QSA]
 RewriteRule ^(?:app/)?admin/documents/action/?$ views/documents/document_action.php [L,QSA]

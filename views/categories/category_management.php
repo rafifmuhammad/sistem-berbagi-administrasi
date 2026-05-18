@@ -79,6 +79,11 @@ $categories = get_categories();
               <i class="material-icons">dashboard</i>Dashboard
             </a>
           </li>
+          <li>
+            <a href="<?= h(app_url('views/visits/visit_management.php')); ?>" class="<?= ($active_menu ?? '') === 'visits' ? 'active' : ''; ?>">
+              <i class="material-icons">insights</i>Kunjungan
+            </a>
+          </li>
           <li class="sidebar-title">Pengurusan Dokumen</li>
           <li>
             <a href="<?= h(app_url('views/documents/document_management.php')); ?>" class="<?= ($active_menu ?? '') === 'documents' ? 'active' : ''; ?>">

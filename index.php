@@ -140,18 +140,20 @@ $categories = get_categories();
                     <table id="publicDocumentsTable" class="table">
                       <thead>
                         <tr>
-                          <th class="text-center">ID</th>
+                          <th class="text-center">No.</th>
                           <th>Nama Dokumen</th>
                           <th>Kategori Dokumen</th>
                           <th class="text-center">Detail</th>
+                          <th class="text-center">Link</th>
+                          <th class="text-center">Diunduh</th>
                           <th class="text-center">Lihat</th>
                           <th class="text-center">Unduh</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <?php foreach ($documents as $document) : ?>
+                        <?php foreach ($documents as $index => $document) : ?>
                         <tr data-category="<?= h($document['nama_kategori']); ?>">
-                          <td class="text-center"><?= h($document['id_document']); ?></td>
+                          <td class="text-center"><?= (int) $index + 1; ?></td>
                           <td><?= h($document['nama_dokumen']); ?></td>
                           <td><?= h($document['nama_kategori']); ?></td>
                           <td class="text-center">
@@ -160,14 +162,32 @@ $categories = get_categories();
                             </a>
                           </td>
                           <td class="text-center">
+                            <?php if (document_has_link($document)) : ?>
+                            <a href="<?= h(document_link_url($document)); ?>" class="btn btn-outline-success btn-sm" target="_blank" rel="noopener noreferrer">
+                              <i class="material-icons">link</i> Link
+                            </a>
+                            <?php else : ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
+                          </td>
+                          <td class="text-center"><?= (int) document_download_count($document); ?></td>
+                          <td class="text-center">
+                            <?php if (document_file_available($document)) : ?>
                             <a href="<?= h(app_url(document_preview_url($document))); ?>" class="btn btn-outline-info btn-sm preview-btn" data-file="<?= h(app_url(document_preview_url($document))); ?>">
                               <i class="material-icons">visibility</i> Lihat
                             </a>
+                            <?php else : ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
                           </td>
                           <td class="text-center">
+                            <?php if (document_file_available($document)) : ?>
                             <a href="<?= h(app_url('files/download.php?id=' . rawurlencode($document['id_document']))); ?>" class="btn btn-outline-primary btn-sm">
                               <i class="material-icons">download</i> Unduh
                             </a>
+                            <?php else : ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
                           </td>
                         </tr>
                         <?php endforeach; ?>

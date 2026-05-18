@@ -81,6 +81,11 @@ $categories = get_categories();
               <i class="material-icons">dashboard</i>Dashboard
             </a>
           </li>
+          <li>
+            <a href="<?= h(app_url('views/visits/visit_management.php')); ?>" class="<?= ($active_menu ?? '') === 'visits' ? 'active' : ''; ?>">
+              <i class="material-icons">insights</i>Kunjungan
+            </a>
+          </li>
           <li class="sidebar-title">Pengurusan Dokumen</li>
           <li>
             <a href="<?= h(app_url('views/documents/document_management.php')); ?>" class="<?= ($active_menu ?? '') === 'documents' ? 'active' : ''; ?>">
@@ -186,7 +191,11 @@ $categories = get_categories();
                     <div class="form-group">
                       <label for="editDocumentFile">Ganti File</label>
                       <input type="file" class="form-control" id="editDocumentFile" name="file" accept=".pdf,.doc,.docx" />
-                      <small class="form-text text-muted">File saat ini: <?= h(basename($document['file'])); ?></small>
+                      <small class="form-text text-muted">File saat ini: <?= !empty($document['file']) ? h(basename($document['file'])) : '-'; ?></small>
+                    </div>
+                    <div class="form-group">
+                      <label for="editDocumentLink">Link Dokumen</label>
+                      <input type="url" class="form-control" id="editDocumentLink" name="link" value="<?= h($document['link_url'] ?? ''); ?>" placeholder="https://contoh.ac.id/dokumen" />
                     </div>
                     <div class="form-group">
                       <label for="editDocumentPreviewFile">Ganti Preview PDF</label>

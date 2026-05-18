@@ -30,8 +30,10 @@ CREATE TABLE IF NOT EXISTS tb_dokumen (
   nama_dokumen VARCHAR(200) NOT NULL,
   keterangan TEXT NULL,
   tanggal_upload DATE NOT NULL,
-  file VARCHAR(255) NOT NULL,
+  file VARCHAR(255) NULL,
   preview_file VARCHAR(255) NULL,
+  link_url VARCHAR(2048) NULL,
+  download_count INT UNSIGNED NOT NULL DEFAULT 0,
   status ENUM('menunggu', 'disetujui', 'ditolak') NOT NULL DEFAULT 'menunggu',
   rejection_reason TEXT NULL,
   approved_by VARCHAR(30) NULL,
@@ -42,6 +44,7 @@ CREATE TABLE IF NOT EXISTS tb_dokumen (
   INDEX idx_document_category (id_category),
   INDEX idx_document_user (id_user),
   INDEX idx_document_status (status),
+  INDEX idx_document_download_count (download_count),
   INDEX idx_document_approved_by (approved_by),
   INDEX idx_document_tanggal_upload (tanggal_upload),
 
@@ -59,6 +62,31 @@ CREATE TABLE IF NOT EXISTS tb_dokumen (
 
   CONSTRAINT fk_document_approved_by
     FOREIGN KEY (approved_by)
+    REFERENCES tb_user (id_user)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS tb_kunjungan (
+  id_visit BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  id_user VARCHAR(30) NULL,
+  session_id VARCHAR(128) NULL,
+  ip_address VARCHAR(45) NULL,
+  user_agent TEXT NULL,
+  browser VARCHAR(80) NULL,
+  operating_system VARCHAR(80) NULL,
+  device_type VARCHAR(30) NULL,
+  page_url VARCHAR(2048) NULL,
+  referrer VARCHAR(2048) NULL,
+  visited_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  INDEX idx_visit_user (id_user),
+  INDEX idx_visit_session (session_id),
+  INDEX idx_visit_visited_at (visited_at),
+  INDEX idx_visit_device_type (device_type),
+
+  CONSTRAINT fk_visit_user
+    FOREIGN KEY (id_user)
     REFERENCES tb_user (id_user)
     ON UPDATE CASCADE
     ON DELETE SET NULL

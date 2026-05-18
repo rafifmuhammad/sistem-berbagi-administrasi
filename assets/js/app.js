@@ -203,6 +203,7 @@
         var usersTable = initTable("#usersTable");
         var documentsTable = initTable("#documentsTable");
         var categoriesTable = initTable("#categoriesTable");
+        initTable("#visitsTable");
         initTable("#recentDocumentsTable");
 
         $(".search").on("submit", function (event) {

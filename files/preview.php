@@ -34,6 +34,7 @@ if ($absolute_file === '') {
 
 $source_extension = document_file_extension($document['file']);
 $extension = document_file_extension($absolute_file);
+$display_file_name = basename((string) (($document['file'] ?? '') !== '' ? $document['file'] : $relative_file));
 
 header_remove('X-Frame-Options');
 header("Content-Security-Policy: frame-ancestors 'self'");
@@ -158,7 +159,7 @@ header('Content-Type: text/html; charset=utf-8');
     <main class="preview-shell">
       <section class="preview-header">
         <h1><?= h($document['nama_dokumen']); ?></h1>
-        <p><?= h(basename($document['file'])); ?></p>
+        <p><?= h($display_file_name); ?></p>
       </section>
 
       <?php if ($notice !== '') : ?>
@@ -198,7 +199,7 @@ header('Content-Type: text/html; charset=utf-8');
           return;
         }
 
-        fetch(<?= json_encode(app_url('files/download.php?id=' . rawurlencode($document['id_document']))); ?>, {
+        fetch(<?= json_encode(app_url('files/download.php?id=' . rawurlencode($document['id_document']) . '&preview=1')); ?>, {
           credentials: 'same-origin'
         })
           .then(function (response) {

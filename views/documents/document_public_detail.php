@@ -99,9 +99,6 @@ $page_title = 'Detail Dokumen - Outline';
                   <div class="document-identity">
                     <div class="row">
                       <div class="col-md-4">
-                        <p><span>ID Dokumen</span><?= h($document['id_document']); ?></p>
-                      </div>
-                      <div class="col-md-4">
                         <p><span>Kategori</span><?= h($document['nama_kategori']); ?></p>
                       </div>
                       <div class="col-md-4">
@@ -114,19 +111,36 @@ $page_title = 'Detail Dokumen - Outline';
                         <p><span>Diunggah Oleh</span><?= h($document['uploader'] ?: '-'); ?></p>
                       </div>
                       <div class="col-md-4">
-                        <p><span>File</span><?= h(basename($document['file'])); ?></p>
+                        <p><span>File</span><?= !empty($document['file']) ? h(basename($document['file'])) : '-'; ?></p>
                       </div>
                       <div class="col-md-12">
                         <p><span>Keterangan</span><?= h($document['keterangan'] ?: '-'); ?></p>
+                      </div>
+                      <div class="col-md-12">
+                        <p>
+                          <span>Link</span>
+                          <?php if (document_has_link($document)) : ?>
+                          <a href="<?= h(document_link_url($document)); ?>" target="_blank" rel="noopener noreferrer"><?= h(document_link_url($document)); ?></a>
+                          <?php else : ?>
+                          -
+                          <?php endif; ?>
+                        </p>
                       </div>
                     </div>
                     <div class="button-list">
                       <a href="<?= h(app_url('index.php')); ?>" class="btn btn-outline-secondary btn-sm js-link-loading">
                         <i class="material-icons">arrow_back</i> Kembali
                       </a>
+                      <?php if (document_has_link($document)) : ?>
+                      <a href="<?= h(document_link_url($document)); ?>" class="btn btn-outline-success btn-sm" target="_blank" rel="noopener noreferrer">
+                        <i class="material-icons">link</i> Link
+                      </a>
+                      <?php endif; ?>
+                      <?php if (document_file_available($document)) : ?>
                       <a href="<?= h(app_url('files/download.php?id=' . rawurlencode($document['id_document']))); ?>" class="btn btn-outline-primary btn-sm">
                         <i class="material-icons">download</i> Unduh
                       </a>
+                      <?php endif; ?>
                     </div>
                   </div>
                 </div>
@@ -135,7 +149,11 @@ $page_title = 'Detail Dokumen - Outline';
               <div class="card">
                 <div class="card-body">
                   <h5 class="card-title">Preview Dokumen</h5>
+                  <?php if (document_file_available($document)) : ?>
                   <iframe class="document-viewer" src="<?= h(app_url(document_preview_url($document))); ?>" title="Preview dokumen"></iframe>
+                  <?php else : ?>
+                  <p class="text-muted mb-0">Preview tidak tersedia karena dokumen ini hanya berisi link.</p>
+                  <?php endif; ?>
                 </div>
               </div>
             </div>

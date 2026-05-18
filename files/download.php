@@ -32,6 +32,10 @@ if ($file_path === '') {
 
 $download_name = basename($file_path);
 
+if (($_GET['preview'] ?? '') !== '1') {
+    increment_document_download_count($document['id_document']);
+}
+
 header('Content-Type: application/octet-stream');
 header('Content-Disposition: attachment; filename="' . str_replace(['"', "\r", "\n"], '', $download_name) . '"');
 header('Content-Length: ' . filesize($file_path));

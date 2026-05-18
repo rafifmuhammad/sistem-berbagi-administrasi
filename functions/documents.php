@@ -32,6 +32,26 @@ function document_status_badge($status, $reason = '', $clickable_reason = false)
     return '<span class="badge ' . $class . '">' . $label . '</span>';
 }
 
+function document_link_url($document)
+{
+    return clean_http_url($document['link_url'] ?? '');
+}
+
+function document_has_link($document)
+{
+    return document_link_url($document) !== '';
+}
+
+function document_file_available($document)
+{
+    return document_storage_path($document['file'] ?? '', ['documents/files']) !== '';
+}
+
+function document_download_count($document)
+{
+    return max(0, (int) ($document['download_count'] ?? 0));
+}
+
 function current_user_id()
 {
     return clean_entity_id($_SESSION['user']['id_user'] ?? '', 'USR');
@@ -119,33 +139,57 @@ function add_document($data, $file, $preview_file_upload = [])
     $id_user = current_user_id();
     $nama = clean_input_text($data['nama_dokumen'] ?? '', 180);
     $keterangan = clean_input_text($data['keterangan'] ?? '', 2000);
+    $link_url_raw = clean_input_text($data['link'] ?? ($data['link_url'] ?? ''), 2048);
+    $link_url = clean_http_url($link_url_raw);
     $tanggal_upload = date('Y-m-d');
+    $has_file_upload = uploaded_file_was_submitted($file);
+    $has_preview_upload = uploaded_file_was_submitted($preview_file_upload);
 
     if (!is_valid_entity_id($id_document, 'DOC') || $id_category === '' || $id_user === '' || $nama === '') {
         return false;
     }
 
-    $file_path = move_document_file($file, $id_document);
-
-    if ($file_path === '') {
+    if ($link_url_raw !== '' && $link_url === '') {
+        set_document_file_error('Link dokumen harus berupa URL http atau https yang valid.');
         return false;
     }
 
-    $has_preview_upload = uploaded_file_was_submitted($preview_file_upload);
-    $preview_file = $has_preview_upload
-        ? move_preview_file($preview_file_upload, $id_document)
-        : make_preview_file($file_path);
+    if (!$has_file_upload && $link_url === '') {
+        set_document_file_error('Isi file dokumen atau link dokumen.');
+        return false;
+    }
+
+    if (!$has_file_upload && $has_preview_upload) {
+        set_document_file_error('File preview PDF hanya bisa diisi jika ada file dokumen.');
+        return false;
+    }
+
+    $file_path = null;
+    $preview_file = null;
+
+    if ($has_file_upload) {
+        $file_path = move_document_file($file, $id_document);
+
+        if ($file_path === '') {
+            return false;
+        }
+
+        $preview_file = $has_preview_upload
+            ? move_preview_file($preview_file_upload, $id_document)
+            : make_preview_file($file_path);
+    }
 
     if ($has_preview_upload && $preview_file === '') {
         return false;
     }
 
     $preview_file = $preview_file !== '' ? $preview_file : null;
+    $link_url = $link_url !== '' ? $link_url : null;
 
     return db_execute("INSERT INTO tb_dokumen
-        (id_document, id_category, id_user, nama_dokumen, keterangan, tanggal_upload, file, preview_file, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'menunggu')
-    ", 'ssssssss', [$id_document, $id_category, $id_user, $nama, $keterangan, $tanggal_upload, $file_path, $preview_file]);
+        (id_document, id_category, id_user, nama_dokumen, keterangan, tanggal_upload, file, preview_file, link_url, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'menunggu')
+    ", 'sssssssss', [$id_document, $id_category, $id_user, $nama, $keterangan, $tanggal_upload, $file_path, $preview_file, $link_url]);
 }
 
 function update_document($id_document, $data, $file, $preview_file_upload = [])
@@ -160,9 +204,28 @@ function update_document($id_document, $data, $file, $preview_file_upload = [])
     $id_category = clean_entity_id($data['id_category'] ?? '', 'CAT');
     $nama = clean_input_text($data['nama_dokumen'] ?? '', 180);
     $keterangan = clean_input_text($data['keterangan'] ?? '', 2000);
+    $link_url_raw = clean_input_text($data['link'] ?? ($data['link_url'] ?? ''), 2048);
+    $link_url = clean_http_url($link_url_raw);
     $tanggal_upload = clean_input_text($data['tanggal_upload'] ?? ($document['tanggal_upload'] ?? date('Y-m-d')), 10);
+    $has_file_upload = uploaded_file_was_submitted($file);
+    $has_preview_upload = uploaded_file_was_submitted($preview_file_upload);
 
     if ($id_category === '' || $nama === '' || !is_valid_date_string($tanggal_upload)) {
+        return false;
+    }
+
+    if ($link_url_raw !== '' && $link_url === '') {
+        set_document_file_error('Link dokumen harus berupa URL http atau https yang valid.');
+        return false;
+    }
+
+    if (!$has_file_upload && !document_file_available($document) && $link_url === '') {
+        set_document_file_error('Isi file dokumen atau link dokumen.');
+        return false;
+    }
+
+    if (!$has_file_upload && !document_file_available($document) && $has_preview_upload) {
+        set_document_file_error('File preview PDF hanya bisa diisi jika ada file dokumen.');
         return false;
     }
 
@@ -171,16 +234,18 @@ function update_document($id_document, $data, $file, $preview_file_upload = [])
         'nama_dokumen = ?',
         'keterangan = ?',
         'tanggal_upload = ?',
+        'link_url = ?',
         "status = 'menunggu'",
         'rejection_reason = NULL',
         'approved_by = NULL',
         'approved_at = NULL',
     ];
-    $types = 'ssss';
-    $params = [$id_category, $nama, $keterangan, $tanggal_upload];
+    $types = 'sssss';
+    $link_url = $link_url !== '' ? $link_url : null;
+    $params = [$id_category, $nama, $keterangan, $tanggal_upload, $link_url];
     $preview_param_index = null;
 
-    if (uploaded_file_was_submitted($file)) {
+    if ($has_file_upload) {
         $file_path = move_document_file($file, $id_document);
 
         if ($file_path === '') {
@@ -198,7 +263,7 @@ function update_document($id_document, $data, $file, $preview_file_upload = [])
         $preview_param_index = count($params) - 1;
     }
 
-    if (uploaded_file_was_submitted($preview_file_upload)) {
+    if ($has_preview_upload) {
         $preview_file = move_preview_file($preview_file_upload, $id_document);
 
         if ($preview_file === '') {
@@ -218,6 +283,20 @@ function update_document($id_document, $data, $file, $preview_file_upload = [])
     $params[] = $id_document;
 
     return db_execute('UPDATE tb_dokumen SET ' . implode(', ', $sets) . ' WHERE id_document = ?', $types, $params);
+}
+
+function increment_document_download_count($id_document)
+{
+    $id_document = clean_entity_id($id_document, 'DOC');
+
+    if ($id_document === '') {
+        return false;
+    }
+
+    return db_execute("UPDATE tb_dokumen
+        SET download_count = download_count + 1
+        WHERE id_document = ? AND file IS NOT NULL AND file <> ''
+    ", 's', [$id_document]);
 }
 
 function approve_document($id_document)

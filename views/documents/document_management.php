@@ -59,6 +59,11 @@ $categories = get_categories();
               <i class="material-icons">dashboard</i>Dashboard
             </a>
           </li>
+          <li>
+            <a href="<?= h(app_url('views/visits/visit_management.php')); ?>" class="<?= ($active_menu ?? '') === 'visits' ? 'active' : ''; ?>">
+              <i class="material-icons">insights</i>Kunjungan
+            </a>
+          </li>
           <?php endif; ?>
           <li class="sidebar-title">Pengurusan Dokumen</li>
           <li>
@@ -187,6 +192,7 @@ $categories = get_categories();
                         <col class="documents-col-category" />
                         <col class="documents-col-date" />
                         <col class="documents-col-status" />
+                        <col class="documents-col-link" />
                         <col class="documents-col-file" />
                         <col class="documents-col-icon" />
                         <col class="documents-col-icon" />
@@ -197,6 +203,7 @@ $categories = get_categories();
                         <col class="documents-col-category" />
                         <col class="documents-col-date" />
                         <col class="documents-col-status" />
+                        <col class="documents-col-link" />
                         <col class="documents-col-file" />
                         <col class="documents-col-action" />
                         <?php endif; ?>
@@ -208,6 +215,7 @@ $categories = get_categories();
                           <th>Kategori</th>
                           <th class="text-center">Tanggal Upload</th>
                           <th class="text-center">Status</th>
+                          <th class="text-center">Link</th>
                           <th>File</th>
                           <?php if (is_admin()) : ?>
                           <th class="text-center no-sort documents-icon-heading" title="Lihat dokumen">
@@ -252,9 +260,19 @@ $categories = get_categories();
                             <?= document_status_badge($document['status'], $document['rejection_reason'] ?? '', true); ?>
                             <?php endif; ?>
                           </td>
-                          <td><?= h(basename($document['file'])); ?></td>
+                          <td class="text-center">
+                            <?php if (document_has_link($document)) : ?>
+                            <a href="<?= h(document_link_url($document)); ?>" class="btn btn-outline-success btn-icon btn-sm" target="_blank" rel="noopener noreferrer" aria-label="Buka link dokumen" title="Buka link dokumen">
+                              <i class="material-icons">link</i>
+                            </a>
+                            <?php else : ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
+                          </td>
+                          <td><?= !empty($document['file']) ? h(basename($document['file'])) : '<span class="text-muted">-</span>'; ?></td>
                           <?php if (is_admin()) : ?>
                           <td class="text-center">
+                            <?php if (document_file_available($document)) : ?>
                             <a
                               href="#"
                               class="btn btn-outline-info btn-icon btn-sm preview-btn"
@@ -264,8 +282,12 @@ $categories = get_categories();
                             >
                               <i class="material-icons">visibility</i>
                             </a>
+                            <?php else : ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
                           </td>
                           <td class="text-center">
+                            <?php if (document_file_available($document)) : ?>
                             <a
                               href="<?= h(app_url('files/download.php?id=' . rawurlencode($document['id_document']))); ?>"
                               class="btn btn-outline-primary btn-icon btn-sm"
@@ -274,6 +296,9 @@ $categories = get_categories();
                             >
                               <i class="material-icons">download</i>
                             </a>
+                            <?php else : ?>
+                            <span class="text-muted">-</span>
+                            <?php endif; ?>
                           </td>
                           <?php endif; ?>
                           <td class="text-center">
