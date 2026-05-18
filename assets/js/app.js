@@ -200,6 +200,12 @@
 
         $(".search").on("submit", function (event) {
             event.preventDefault();
+
+            var $input = $(this).find("[data-table-search]").first();
+
+            if ($input.length) {
+                scrollToTable($input.data("table-search"));
+            }
         });
 
         $('[data-toggle="tooltip"]').tooltip();
@@ -226,15 +232,30 @@
             }
         });
 
-        $("[data-table-search]").on("focus", function () {
-            scrollToTable($(this).data("table-search"));
-        });
-
         $("[data-table-search]").on("input", function () {
+            var $input = $(this);
             var tableId = $(this).data("table-search");
             var table = $("#" + tableId).DataTable();
             table.search(this.value).draw();
-            scrollToTable(tableId);
+
+            var filteredCount = table.rows({ search: "applied" }).count();
+            var previousCount = Number($input.data("filtered-count"));
+            var hasQuery = $.trim(this.value) !== "";
+
+            if (hasQuery && filteredCount === 1 && previousCount !== 1) {
+                scrollToTable(tableId);
+            }
+
+            $input.data("filtered-count", filteredCount);
+        });
+
+        $("[data-table-search]").on("keydown", function (event) {
+            if (event.key !== "Enter") {
+                return;
+            }
+
+            event.preventDefault();
+            scrollToTable($(this).data("table-search"));
         });
 
         $(".js-demo-submit").on("submit", function (event) {
